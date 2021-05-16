@@ -64,6 +64,7 @@ mod main_staking {
 
     #[access_control(CreateMember::accounts(&ctx, nonce))]
     pub fn create_member(ctx: Context<CreateMember>, nonce: u8) -> Result<()> {
+        msg!("Hello create member function");
         let member = &mut ctx.accounts.member;
         member.registrar = *ctx.accounts.registrar.to_account_info().key;
         member.beneficiary = *ctx.accounts.beneficiary.key;
@@ -159,6 +160,9 @@ mod main_staking {
         &ctx.accounts.balances_locked,
     ))]
     pub fn start_unstake(ctx: Context<StartUnstake>, spt_amount: u64, locked: bool) -> Result<()> {
+
+        msg!("Hello start unstake");
+
         let balances = {
             if locked {
                 &ctx.accounts.balances_locked
@@ -230,12 +234,10 @@ mod main_staking {
     pub fn end_unstake(ctx: Context<EndUnstake>) -> Result<()> {
 
         msg!("Hello end unstake");
-
         msg!("1");
         if ctx.accounts.pending_withdrawal.end_ts > ctx.accounts.clock.unix_timestamp {
             return Err(ErrorCode::UnstakeTimelock.into());
         }
-
         msg!("2");
         // Select which balance set this affects.
         let balances = {
@@ -253,7 +255,6 @@ mod main_staking {
         if &balances.vault_pending_withdraw != ctx.accounts.vault_pending_withdraw.key {
             return Err(ErrorCode::InvalidVault.into());
         }
-
         msg!("4");
         // Transfer tokens between vaults.
         {
@@ -274,7 +275,6 @@ mod main_staking {
             );
             token::transfer(cpi_ctx, ctx.accounts.pending_withdrawal.amount)?;
         }
-
         msg!("5");
         // Burn the pending withdrawal receipt.
         let pending_withdrawal = &mut ctx.accounts.pending_withdrawal;
