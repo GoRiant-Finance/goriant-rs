@@ -2,10 +2,10 @@ const anchor = require("@project-serum/anchor");
 const serumCmn = require("@project-serum/common");
 
 async function createBalanceSandbox(provider, r, registrySigner) {
-  const spt = new anchor.web3.Account();
-  const vault = new anchor.web3.Account();
-  const vaultStake = new anchor.web3.Account();
-  const vaultPendingWithdraw = new anchor.web3.Account();
+  const spt = anchor.web3.Keypair.generate();
+  const vault = anchor.web3.Keypair.generate();
+  const vaultStake = anchor.web3.Keypair.generate();
+  const vaultPw = anchor.web3.Keypair.generate();
 
   const lamports = await provider.connection.getMinimumBalanceForRentExemption(
     165
@@ -34,7 +34,7 @@ async function createBalanceSandbox(provider, r, registrySigner) {
   );
   const createVaultPwIx = await serumCmn.createTokenAccountInstrs(
     provider,
-    vaultPendingWithdraw.publicKey,
+    vaultPw.publicKey,
     r.mint,
     registrySigner,
     lamports
@@ -46,7 +46,7 @@ async function createBalanceSandbox(provider, r, registrySigner) {
     ...createVaultStakeIx,
     ...createVaultPwIx
   );
-  let signers0 = [spt, vault, vaultStake, vaultPendingWithdraw];
+  let signers0 = [spt, vault, vaultStake, vaultPw];
 
   const tx = { tx: tx0, signers: signers0 };
 
@@ -56,7 +56,7 @@ async function createBalanceSandbox(provider, r, registrySigner) {
       spt: spt.publicKey,
       vault: vault.publicKey,
       vaultStake: vaultStake.publicKey,
-      vaultPendingWithdraw: vaultPendingWithdraw.publicKey,
+      vaultPw: vaultPw.publicKey,
     },
   ];
 }

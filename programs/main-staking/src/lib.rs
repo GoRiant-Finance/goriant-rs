@@ -8,7 +8,6 @@ use std::convert::Into;
 
 // Flexible staking program auto compounding daily
 
-#[program]
 mod main_staking {
     use super::*;
 
@@ -201,7 +200,7 @@ mod main_staking {
                 ctx.accounts.token_program.clone(),
                 token::Transfer {
                     from: balances.vault_stake.to_account_info(),
-                    to: balances.vault_pw.to_account_info(),
+                    to: balances.vault_pending_withdraw.to_account_info(),
                     authority: ctx.accounts.member_signer.to_account_info(),
                 },
                 member_signer,
@@ -251,7 +250,7 @@ mod main_staking {
         if &balances.vault != ctx.accounts.vault.key {
             return Err(ErrorCode::InvalidVault.into());
         }
-        if &balances.vault_pending_withdraw != ctx.accounts.vault_pw.key {
+        if &balances.vault_pending_withdraw != ctx.accounts.vault_pending_withdraw.key {
             return Err(ErrorCode::InvalidVault.into());
         }
 
@@ -267,7 +266,7 @@ mod main_staking {
             let cpi_ctx = CpiContext::new_with_signer(
                 ctx.accounts.token_program.clone(),
                 Transfer {
-                    from: ctx.accounts.vault_pw.to_account_info(),
+                    from: ctx.accounts.vault_pending_withdraw.to_account_info(),
                     to: ctx.accounts.vault.to_account_info(),
                     authority: ctx.accounts.member_signer.clone(),
                 },
@@ -518,8 +517,8 @@ pub struct BalanceSandboxAccounts<'info> {
         "vault_stake.mint == vault.mint"
     )]
     vault_stake: CpiAccount<'info, TokenAccount>,
-    #[account(mut, "vault_pw.owner == spt.owner", "vault_pw.mint == vault.mint")]
-    vault_pw: CpiAccount<'info, TokenAccount>,
+    #[account(mut, "vault_pending_withdraw.owner == spt.owner", "vault_pending_withdraw.mint == vault.mint")]
+    vault_pending_withdraw: CpiAccount<'info, TokenAccount>,
 }
 
 #[derive(Accounts)]
@@ -664,7 +663,7 @@ pub struct EndUnstake<'info> {
     #[account(mut)]
     vault: AccountInfo<'info>,
     #[account(mut)]
-    vault_pw: AccountInfo<'info>,
+    vault_pending_withdraw: AccountInfo<'info>,
 
     #[account(
         seeds = [
@@ -1072,7 +1071,7 @@ impl<'info> From<&BalanceSandboxAccounts<'info>> for BalanceSandbox {
             spt: *accs.spt.to_account_info().key,
             vault: *accs.vault.to_account_info().key,
             vault_stake: *accs.vault_stake.to_account_info().key,
-            vault_pending_withdraw: *accs.vault_pw.to_account_info().key,
+            vault_pending_withdraw: *accs.vault_pending_withdraw.to_account_info().key,
         }
     }
 }

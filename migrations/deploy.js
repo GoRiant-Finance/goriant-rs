@@ -9,5 +9,12 @@ module.exports = async function (provider) {
   // Configure client to use the provider.
   anchor.setProvider(provider);
 
+  const registrarConfigs = await genesis(provider);
+
+  const registry = anchor.workspace.Registry;
+
+  console.log('deploy: ', registry)
+  console.log('deploy: ', registry.programId)
+
   // Add your deploy script here.
 }
