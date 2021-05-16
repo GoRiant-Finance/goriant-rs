@@ -409,6 +409,9 @@ async function unstacks_unlocked() {
 
 async function try_end_unstake() {
 
+  console.log("#########")
+  console.log("#########")
+  console.log("#########")
   console.log("Balance of registrar.publicKey: ", registrar.publicKey.toBase58(), " ", await balance(registrar.publicKey));
   console.log("Balance of member.publicKey: ", member.publicKey.toBase58(), " ", await balance(member.publicKey));
   console.log("Balance of pendingWithdrawal.publicKey: ", pendingWithdrawal.publicKey.toBase58(), " ", await balance(pendingWithdrawal.publicKey));
@@ -416,24 +419,34 @@ async function try_end_unstake() {
   console.log("Balance of balances.vault: ", balances.vault.toString(), " ", await balance(balances.vault));
   console.log("Balance of balances.vaultPendingWithdraw: ", balances.vaultPendingWithdraw.toString(), " ", await balance(balances.vaultPendingWithdraw));
   console.log("Balance of memberSigner: ", memberSigner.toString(), " ", await balance(memberSigner));
+  console.log("#########")
+  console.log("#########")
+  console.log("#########")
+  console.log("Start call end unstake")
 
-  const tx = await main_staking_program.rpc.endUnstake({
-    accounts: {
-      registrar: registrar.publicKey,
+  let tx;
+  try {
+    tx = await main_staking_program.rpc.endUnstake({
+      accounts: {
+        registrar: registrar.publicKey,
 
-      member: member.publicKey,
-      beneficiary: owner,
-      pendingWithdrawal: pendingWithdrawal.publicKey,
+        member: member.publicKey,
+        beneficiary: owner,
+        pendingWithdrawal: pendingWithdrawal.publicKey,
 
-      vault: balances.vault,
-      vaultPendingWithdraw: balances.vaultPendingWithdraw,
+        vault: balances.vault,
+        vaultPendingWithdraw: balances.vaultPendingWithdraw,
 
-      memberSigner,
+        memberSigner,
 
-      clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
-      tokenProgram: TokenInstructions.TOKEN_PROGRAM_ID,
-    },
-  });
+        clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
+        tokenProgram: TokenInstructions.TOKEN_PROGRAM_ID,
+      },
+    });
+  } catch (e) {
+    console.log("Error when call end unstake: ", e)
+  }
+
 
   console.log(tx)
 }
