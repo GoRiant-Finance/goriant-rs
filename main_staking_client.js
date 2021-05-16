@@ -430,6 +430,11 @@ async function try_end_unstake() {
 
   console.log("Balance of registrar.publicKey: ", registrar.publicKey.toBase58(), " ", await balance(registrar.publicKey));
   console.log("Balance of member.publicKey: ", member.publicKey.toBase58(), " ", await balance(member.publicKey));
+  console.log("Balance of pendingWithdrawal.publicKey: ", pendingWithdrawal.publicKey.toBase58(), " ", await balance(pendingWithdrawal.publicKey));
+
+  console.log("Balance of balances.vault: ", balances.vault.toString(), " ", await balance(balances.vault));
+  console.log("Balance of balances.vaultPendingWithdraw: ", balances.vaultPendingWithdraw.toString(), " ", await balance(balances.vaultPendingWithdraw));
+  console.log("Balance of memberSigner: ", memberSigner.toString(), " ", await balance(memberSigner));
 
   const tx = await main_staking_program.rpc.endUnstake({
     accounts: {
