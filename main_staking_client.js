@@ -18,6 +18,7 @@ let main_staking_program = null;
 let mint = null;
 let god = null;
 
+const owner = provider.wallet.publicKey;
 const registrar = new anchor.web3.Account();
 const rewardQ = new anchor.web3.Account();
 const withdrawalTimelock = new anchor.BN(4);
@@ -39,8 +40,6 @@ const unlockedVendorVault = new anchor.web3.Account();
 let unlockedVendorSigner = null;
 
 const pendingWithdrawal = new anchor.web3.Account();
-
-const owner = provider.wallet.publicKey;
 
 async function main() {
 
@@ -85,6 +84,12 @@ async function set_up_state() {
   console.log("owner: ", owner.toBase58(), " ", await balance(owner));
   console.log("mint: ", mint.toBase58(), " ", await balance(mint));
   console.log("god: ", god.toBase58(), " ", await balance(god));
+  console.log("pending withdrawal: ", pendingWithdrawal.publicKey.toBase58(), " ", await balance(pendingWithdrawal.publicKey));
+
+  console.log("Send 1_000_000 lamports to pending withdrawal account");
+  await sendSol(pendingWithdrawal.publicKey, 1_000_000);
+
+  console.log("pending withdrawal: ", pendingWithdrawal.publicKey.toBase58(), " ", await balance(pendingWithdrawal.publicKey));
 }
 
 async function create_registry_genesis() {
@@ -502,6 +507,25 @@ async function sleep(ms) {
 
 async function balance(address) {
   return provider.connection.getBalance(address);
+}
+
+async function sendSol(receiver, amount) {
+  const tx = new anchor.web3.Transaction().add(
+    anchor.web3.SystemProgram.transfer({
+      fromPubkey: owner,
+      toPubkey: receiver,
+      lamports: amount,
+    }),
+  );
+
+  const res = await provider.connection.sendTransaction(tx, [provider.wallet.payer]);
+
+  await sleep(500);
+
+  console.log("Receipt: ", res);
+  console.log("from: ", owner.toBase58(), "to receiver: ", receiver.toString(), " Sent: ", amount);
+  console.log("Balance of owner: ", await balance(owner));
+  console.log("Balance of receiver: ", await balance(receiver));
 }
 
 console.log('Running client.');
