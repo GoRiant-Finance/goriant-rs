@@ -261,3 +261,4 @@ Cargo.lock
 .idea
 test-ledger
 nohup.out
+config.json
