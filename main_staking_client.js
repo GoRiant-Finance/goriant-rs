@@ -1,13 +1,16 @@
 const anchor = require("@project-serum/anchor");
 const serumCmn = require("@project-serum/common");
 const TokenInstructions = require("@project-serum/serum").TokenInstructions;
-const utils = require("./utils");
+const utils = require("./utils"); 
+const fs = require('fs');
 
+const config = JSON.parse(fs.readFileSync('config.json', 'utf8'));
+console.log(config.programId);
 //----------------
-const main_staking_programId = new anchor.web3.PublicKey("CFYqtuS31jnfkSrSVmfDoFgDPj8YmR3Hp6MDgteMpgP7");
+const main_staking_programId = new anchor.web3.PublicKey(config.programId);
 const provider = anchor.Provider.local();
 anchor.setProvider(provider);
-const fs = require('fs');
+
 const main_staking_idl = JSON.parse(fs.readFileSync('./target/idl/main_staking.json', 'utf8'));
 
 let main_staking_program = null;
@@ -98,7 +101,6 @@ async function set_up_state() {
     console.log("mint: ", mint.toBase58());
     console.log("god: ", god.toBase58());
 }
-
 async function create_registry_genesis() {
     const [
         _registrarSigner,
@@ -115,7 +117,6 @@ async function create_registry_genesis() {
     poolMint = await serumCmn.createMint(provider, registrarSigner);
     console.log("poolMing: ", poolMint.toBase58());
 }
-
 async function initialize_registrar() {
     await main_staking_program.rpc.initialize(
       mint,
@@ -358,7 +359,6 @@ async function collects_unlocked_reward() {
     // console.log("memberAccount: ", memberAccount);
     console.log("memberAccount 2: ");
 }
-
 async function unstacks_unlocked() {
     const unstakeAmount = new anchor.BN(10);
 
@@ -469,8 +469,7 @@ async function withdraws_deposits_unlocked() {
     // console.log("11 tokenAccount: ", tokenAccount);
     console.log("11 tokenAccount: ");
 }
-
-function sleep(ms) {
+async function sleep(ms) {
     return new Promise((resolve) => {
         setTimeout(resolve, ms);
     });
