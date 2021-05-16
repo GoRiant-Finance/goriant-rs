@@ -7,7 +7,7 @@ use anchor_spl::token::{self, Mint, TokenAccount, Transfer};
 use std::convert::Into;
 
 // Flexible staking program auto compounding daily
-
+#[program]
 mod main_staking {
     use super::*;
 
