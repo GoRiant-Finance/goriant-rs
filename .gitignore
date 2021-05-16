@@ -259,3 +259,4 @@ Cargo.lock
 # End of https://www.toptal.com/developers/gitignore/api/rust,node,yarn,intellij
 .anchor
 .idea
+test-ledger
