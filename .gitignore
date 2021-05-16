@@ -260,3 +260,4 @@ Cargo.lock
 .anchor
 .idea
 test-ledger
+nohup.out
