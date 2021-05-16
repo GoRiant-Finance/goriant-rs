@@ -14,18 +14,9 @@ const main_staking_idl = JSON.parse(fs.readFileSync('./target/idl/main_staking.j
 
 let main_staking_program = null;
 
-//----------------
-const entries = [];
-const WHITELIST_SIZE = 10;
-
 //--------
 let mint = null;
 let god = null;
-
-//----create vesting account
-const vesting = new anchor.web3.Account();
-let vestingAccount = null;
-let vestingSigner = null;
 
 const registrar = new anchor.web3.Account();
 const rewardQ = new anchor.web3.Account();
@@ -46,16 +37,6 @@ let balancesLocked = null;
 const unlockedVendor = new anchor.web3.Account();
 const unlockedVendorVault = new anchor.web3.Account();
 let unlockedVendorSigner = null;
-
-const lockedVendor = new anchor.web3.Account();
-const lockedVendorVault = new anchor.web3.Account();
-let lockedVendorSigner = null;
-let lockedRewardAmount = null;
-let lockedRewardKind = null;
-
-let vendoredVesting = null;
-let vendoredVestingVault = null;
-let vendoredVestingSigner = null;
 
 const pendingWithdrawal = new anchor.web3.Account();
 
