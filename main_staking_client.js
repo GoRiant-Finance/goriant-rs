@@ -6,7 +6,7 @@ const fs = require('fs');
 
 const config = JSON.parse(fs.readFileSync('config.json', 'utf8'));
 //----------------
-const main_staking_programId = new anchor.web3.PublicKey(config.programId);
+const main_staking_program_id = new anchor.web3.PublicKey(config.programId);
 const provider = anchor.Provider.local();
 anchor.setProvider(provider);
 
@@ -87,7 +87,7 @@ async function main() {
 }
 
 async function load_program() {
-  main_staking_program = new anchor.Program(main_staking_idl, main_staking_programId);
+  main_staking_program = new anchor.Program(main_staking_idl, main_staking_program_id);
 }
 
 async function set_up_state() {
@@ -99,8 +99,11 @@ async function set_up_state() {
   );
   mint = _mint;
   god = _god;
-  console.log("mint: ", mint.toBase58());
-  console.log("god: ", god.toBase58());
+
+  console.log("main_staking_program_id: ", main_staking_program_id.toBase58(), " ", await balance(main_staking_program_id));
+  console.log("owner: ", owner.toBase58(), " ", await balance(owner));
+  console.log("mint: ", mint.toBase58(), " ", await balance(mint));
+  console.log("god: ", god.toBase58(), " ", await balance(god));
 }
 
 async function create_registry_genesis() {
@@ -146,7 +149,11 @@ async function initialize_registrar() {
   registrarAccount = await main_staking_program.account.registrar(registrar.publicKey);
 
   // console.log("registrarAccount: ", registrarAccount);
-  console.log("registrarAccount: ");
+  console.log("registrarAccount.authority: ", registrarAccount.authority.toString());
+  console.log("registrarAccount.rewardEventQ: ", registrarAccount.rewardEventQ.toString());
+  console.log("registrarAccount.mint: ", registrarAccount.mint.toString());
+  console.log("registrarAccount.stakeRate: ", registrarAccount.stakeRate.toString(), "%");
+  console.log("registrarAccount.withdrawalTimelock: ", registrarAccount.withdrawalTimelock.toString());
 }
 
 async function create_member() {
@@ -414,12 +421,16 @@ async function unstacks_unlocked() {
   // console.log("vaultStake: ", vaultStake);
   // console.log("spt: ", spt);
 
-  console.log("vaultPendingWithdraw: ");
-  console.log("vaultStake: ");
-  console.log("spt: ");
+  console.log("vaultPendingWithdraw: ", vaultPendingWithdraw.toString());
+  console.log("vaultStake: ", vaultStake.toString());
+  console.log("spt: ", spt.toString());
 }
 
 async function try_end_unstake() {
+
+  console.log("Balance of registrar.publicKey: ", registrar.publicKey.toBase58(), " ", await balance(registrar.publicKey));
+  console.log("Balance of member.publicKey: ", member.publicKey.toBase58(), " ", await balance(member.publicKey));
+
   const tx = await main_staking_program.rpc.endUnstake({
     accounts: {
       registrar: registrar.publicKey,
@@ -488,6 +499,10 @@ async function sleep(ms) {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
+}
+
+async function balance(address) {
+  return provider.connection.getBalance(address);
 }
 
 console.log('Running client.');
