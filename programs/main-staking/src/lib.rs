@@ -242,10 +242,12 @@ mod main_staking {
 
         msg!("Hello end unstake");
         msg!("1");
+        // Chưa tới giờ unstake
         if ctx.accounts.pending_withdrawal.end_ts > ctx.accounts.clock.unix_timestamp {
             return Err(ErrorCode::UnstakeTimelock.into());
         }
         msg!("2");
+        msg!("locked: {}", ctx.accounts.pending_withdrawal.locked);
         // Select which balance set this affects.
         let balances = {
             if ctx.accounts.pending_withdrawal.locked {
@@ -365,6 +367,7 @@ mod main_staking {
         // Reward distribution.
         msg!("Reward distribution");
         let spt_total = ctx.accounts.cmn.balances.spt.amount;
+        msg!("Staking pool token: {}", spt_total);
         msg!("Reward distribution 1");
         let reward_amount = spt_total
             .checked_mul(ctx.accounts.cmn.vendor.total)

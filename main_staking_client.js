@@ -43,6 +43,7 @@ let balancesLocked = null;
 let unlockedVendorSigner = null;
 
 async function main() {
+  console.log("----------------------------------------");
 
   console.log("Start Setup")
   await load_program();
@@ -53,20 +54,24 @@ async function main() {
 
   console.log("End Setup")
   console.log("")
+  console.log("----------------------------------------");
 
   await initialize_registrar();
 
   await create_member();
 
-  await drops_unlocked_reward();
-
   await deposit_unlocked_member();
 
   await stake_unlocked_member();
 
-  await unstacks_unlocked();
+  await drops_unlocked_reward();
 
   await collects_unlocked_reward();
+
+  await unstacks_unlocked();
+
+  console.log("wait 5 seconds .....");
+  await new Promise(r => setTimeout(r, 5000));
 
   await unstake_finalizes_unlocked();
 
@@ -146,7 +151,7 @@ async function initialize_registrar() {
   console.log("registrarAccount.stakeRate: ", registrarAccount.stakeRate.toString(), "%");
   console.log("registrarAccount.withdrawalTimelock: ", registrarAccount.withdrawalTimelock.toString());
   console.log("#####");
-  console.log("");
+  console.log("----------------------------------------");
 }
 
 async function create_member() {
@@ -204,7 +209,7 @@ async function create_member() {
   console.log("Send SOL to memberSigner");
   await sendSol(memberSigner, 2_000_000);
   console.log("$$$$$$$$$$")
-  console.log("")
+  console.log("----------------------------------------");
 }
 
 async function deposit_unlocked_member() {
@@ -231,7 +236,7 @@ async function deposit_unlocked_member() {
   console.log("memberVault.mint: ", memberVault.mint.toString(), " ", await balance(memberVault.mint));
   console.log("memberVault.owner: ", memberVault.owner.toString(), " ", await balance(memberVault.owner));
   console.log("########");
-  console.log("")
+  console.log("----------------------------------------");
 }
 
 async function stake_unlocked_member() {
@@ -275,8 +280,8 @@ async function stake_unlocked_member() {
   await printStructInfo("vault", vault)
   await printStructInfo("vaultStake", vaultStake)
   await printStructInfo("spt", spt);
-  console.log("****************")
-  console.log("")
+  console.log("----------------------------------------");
+
 }
 
 async function drops_unlocked_reward() {
@@ -338,8 +343,7 @@ async function drops_unlocked_reward() {
 
   await printVendor("vendorAccount", vendorAccount);
   console.log("rewardQAccount: ", rewardQAccount.toString());
-  console.log("###########")
-  console.log("")
+  console.log("----------------------------------------");
 }
 
 async function collects_unlocked_reward() {
@@ -381,11 +385,11 @@ async function collects_unlocked_reward() {
 
   await printStructInfo("tokenAccount", tokenAccount);
   await printMemberAccountInfo("memberAccount", memberAccount);
-  console.log("&&&&&&&&&&")
-  console.log("")
+  console.log("----------------------------------------");
 }
 
 async function unstacks_unlocked() {
+  console.log("start unstake");
   const unstakeAmount = new anchor.BN(10);
 
   await main_staking_program.rpc.startUnstake(unstakeAmount, false, {
@@ -430,6 +434,7 @@ async function unstacks_unlocked() {
   console.log("vaultPendingWithdraw: ", vaultPendingWithdraw.toString());
   console.log("vaultStake: ", vaultStake.toString());
   console.log("spt: ", spt.toString());
+  console.log("----------------------------------------");
 }
 
 async function try_end_unstake() {
@@ -482,6 +487,7 @@ async function unstake_finalizes_unlocked() {
 
   console.log("vault: ");
   console.log("vaultPendingWithdraw: ");
+  console.log("----------------------------------------");
 }
 
 async function withdraws_deposits_unlocked() {
@@ -505,7 +511,9 @@ async function withdraws_deposits_unlocked() {
 
   const tokenAccount = await serumCmn.getTokenAccount(provider, token);
   // console.log("11 tokenAccount: ", tokenAccount);
-  console.log("11 tokenAccount: ");
+  console.log("11 tokenAccount: ", tokenAccount);
+  console.log("----------------------------------------");
+
 }
 
 async function sleep(ms) {
