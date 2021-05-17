@@ -78,7 +78,7 @@ async function main() {
   await unstacks_unlocked();
 
   console.log("wait 5 seconds .....");
-  await new Promise(r => setTimeout(r, 5000));
+  await sleep(5000);
 
   // Staker kết thúc unstake -> tiền về tài khoản pool stake
   await unstake_finalizes_unlocked();
