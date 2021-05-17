@@ -56,25 +56,34 @@ async function main() {
   console.log("")
   console.log("----------------------------------------");
 
+  // Tạo pool stake chung
   await initialize_registrar();
 
+  // Đăng kí để stake
   await create_member();
 
+  // Nạp tiền vào tài khoản trong pool stake
   await deposit_unlocked_member();
 
+  // Thực hiện stake
   await stake_unlocked_member();
 
+  // Nhà đầu tư abc đổ tiền vào làm phần thưởng cho các staker
   await drops_unlocked_reward();
 
+  // Staker vào harvest lợi nhuận từ nhà đầu tư
   await collects_unlocked_reward();
 
+  // Staker yêu cầu unstake
   await unstacks_unlocked();
 
   console.log("wait 5 seconds .....");
   await new Promise(r => setTimeout(r, 5000));
 
+  // Staker kết thúc unstake -> tiền về tài khoản pool stake
   await unstake_finalizes_unlocked();
 
+  // Rút tiền từ pool stake ra ví ngoài
   await withdraws_deposits_unlocked();
 }
 
