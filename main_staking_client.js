@@ -3,7 +3,6 @@ const serumCmn = require("@project-serum/common");
 const TokenInstructions = require("@project-serum/serum").TokenInstructions;
 const utils = require("./utils");
 const fs = require('fs');
-
 const config = JSON.parse(fs.readFileSync('config.json', 'utf8'));
 //----------------
 const main_staking_program_id = new anchor.web3.PublicKey(config.programId);
@@ -21,6 +20,12 @@ let god = null;
 const owner = provider.wallet.publicKey;
 const registrar = new anchor.web3.Account();
 const rewardQ = new anchor.web3.Account();
+const member = new anchor.web3.Account();
+
+const pendingWithdrawal = new anchor.web3.Account();
+const unlockedVendor = new anchor.web3.Account();
+const unlockedVendorVault = new anchor.web3.Account();
+
 const withdrawalTimelock = new anchor.BN(4);
 const stakeRate = new anchor.BN(2);
 const rewardQLen = 170;
@@ -29,35 +34,37 @@ let registrarSigner = null;
 let nonce = null;
 let poolMint = null;
 
-const member = new anchor.web3.Account();
+
 let memberAccount = null;
 let memberSigner = null;
 let balances = null;
 let balancesLocked = null;
 
-const unlockedVendor = new anchor.web3.Account();
-const unlockedVendorVault = new anchor.web3.Account();
 let unlockedVendorSigner = null;
-
-const pendingWithdrawal = new anchor.web3.Account();
 
 async function main() {
 
+  console.log("Start Setup")
   await load_program();
 
   await set_up_state();
 
   await create_registry_genesis();
 
+  console.log("End Setup")
+  console.log("")
+
   await initialize_registrar();
 
   await create_member();
+
+  await drops_unlocked_reward();
 
   await deposit_unlocked_member();
 
   await stake_unlocked_member();
 
-  await drops_unlocked_reward();
+  await unstacks_unlocked();
 
   await collects_unlocked_reward();
 
@@ -80,16 +87,10 @@ async function set_up_state() {
   mint = _mint;
   god = _god;
 
-  console.log("main_staking_program_id: ", main_staking_program_id.toBase58(), " ", await balance(main_staking_program_id));
-  console.log("owner: ", owner.toBase58(), " ", await balance(owner));
-  console.log("mint: ", mint.toBase58(), " ", await balance(mint));
-  console.log("god: ", god.toBase58(), " ", await balance(god));
-  console.log("pending withdrawal: ", pendingWithdrawal.publicKey.toBase58(), " ", await balance(pendingWithdrawal.publicKey));
-
-  console.log("Send 1_000_000 lamports to pending withdrawal account");
-  await sendSol(pendingWithdrawal.publicKey, 1_000_000);
-
-  console.log("pending withdrawal: ", pendingWithdrawal.publicKey.toBase58(), " ", await balance(pendingWithdrawal.publicKey));
+  console.log(" main_staking_program_id: ", main_staking_program_id.toBase58(), " ", await balance(main_staking_program_id));
+  console.log(" owner: ", owner.toBase58(), " ", await balance(owner));
+  console.log(" mint: ", mint.toBase58(), " ", await balance(mint));
+  console.log(" god: ", god.toBase58(), " ", await balance(god));
 }
 
 async function create_registry_genesis() {
@@ -102,11 +103,14 @@ async function create_registry_genesis() {
   );
   registrarSigner = _registrarSigner;
   nonce = _nonce;
-  console.log("registrarSigner: ", registrarSigner.toBase58());
-  console.log("nonce: ", nonce);
 
   poolMint = await serumCmn.createMint(provider, registrarSigner);
-  console.log("poolMing: ", poolMint.toBase58());
+
+  await sendSol(registrarSigner, 1_000_000);
+
+  console.log(" poolMint: ", poolMint.toBase58(), " ", await balance(poolMint));
+  console.log(" registrarSigner: ", registrarSigner.toBase58(), " ", await balance(registrarSigner));
+  console.log(" nonce: ", nonce);
 }
 
 async function initialize_registrar() {
@@ -134,12 +138,15 @@ async function initialize_registrar() {
 
   registrarAccount = await main_staking_program.account.registrar(registrar.publicKey);
 
-  // console.log("registrarAccount: ", registrarAccount);
-  console.log("registrarAccount.authority: ", registrarAccount.authority.toString());
-  console.log("registrarAccount.rewardEventQ: ", registrarAccount.rewardEventQ.toString());
-  console.log("registrarAccount.mint: ", registrarAccount.mint.toString());
+  console.log("#####");
+  console.log("invoke init staking program")
+  console.log("registrarAccount.authority: ", registrarAccount.authority.toString(), " ", await balance(registrarAccount.authority));
+  console.log("registrarAccount.rewardEventQ: ", registrarAccount.rewardEventQ.toString(), " ", await balance(registrarAccount.rewardEventQ));
+  console.log("registrarAccount.mint: ", registrarAccount.mint.toString(), " ", await balance(registrarAccount.mint));
   console.log("registrarAccount.stakeRate: ", registrarAccount.stakeRate.toString(), "%");
   console.log("registrarAccount.withdrawalTimelock: ", registrarAccount.withdrawalTimelock.toString());
+  console.log("#####");
+  console.log("");
 }
 
 async function create_member() {
@@ -188,14 +195,23 @@ async function create_member() {
 
   memberAccount = await main_staking_program.account.member(member.publicKey);
 
-  // console.log("memberAccount: ", memberAccount);
-  console.log("memberAccount 1: ")
-  console.log("balances: ", balances.toString());
-  console.log("balancesLocked: ", balancesLocked.toString());
+  console.log("$$$$$$$$$$")
+  console.log("invoke createMember")
+
+  await printBalance("balances", balances);
+  await printBalance("balancesLocked", balancesLocked);
+
+  console.log("Send SOL to memberSigner");
+  await sendSol(memberSigner, 2_000_000);
+  console.log("$$$$$$$$$$")
+  console.log("")
 }
 
 async function deposit_unlocked_member() {
+  console.log("########");
+  console.log("invoke deposit 120 Token")
   const depositAmount = new anchor.BN(120);
+
   await main_staking_program.rpc.deposit(depositAmount, {
     accounts: {
       depositor: god,
@@ -207,16 +223,22 @@ async function deposit_unlocked_member() {
     },
   });
 
+  console.log("invoke serum common get token account from member account balances vault")
   const memberVault = await serumCmn.getTokenAccount(
     provider,
     memberAccount.balances.vault
   );
-  // console.log("memberVault: ", memberVault);
-  console.log("memberVault: ");
+  console.log("memberVault.mint: ", memberVault.mint.toString(), " ", await balance(memberVault.mint));
+  console.log("memberVault.owner: ", memberVault.owner.toString(), " ", await balance(memberVault.owner));
+  console.log("########");
+  console.log("")
 }
 
 async function stake_unlocked_member() {
+  console.log("****************")
+  console.log("invoke stake for unlocked member")
   const stakeAmount = new anchor.BN(10);
+
   await main_staking_program.rpc.stake(stakeAmount, false, {
     accounts: {
       // Stake instance.
@@ -250,21 +272,22 @@ async function stake_unlocked_member() {
     memberAccount.balances.spt
   );
 
-  // console.log("vault: ", vault);
-  // console.log("vaultState: ", vaultStake);
-  // console.log("spt: ", spt);
-
-  console.log("vault: ");
-  console.log("vaultState: ");
-  console.log("spt: ");
+  await printStructInfo("vault", vault)
+  await printStructInfo("vaultStake", vaultStake)
+  await printStructInfo("spt", spt);
+  console.log("****************")
+  console.log("")
 }
 
 async function drops_unlocked_reward() {
+  console.log("###########")
+  console.log("invoke drop unlocked reward");
   const rewardKind = {
     unlocked: {},
   };
   const rewardAmount = new anchor.BN(200);
   const expiry = new anchor.BN(Date.now() / 1000 + 5);
+
   const [
     _vendorSigner,
     nonce,
@@ -272,6 +295,7 @@ async function drops_unlocked_reward() {
     [registrar.publicKey.toBuffer(), unlockedVendor.publicKey.toBuffer()],
     main_staking_program.programId
   );
+
   unlockedVendorSigner = _vendorSigner;
 
   await main_staking_program.rpc.dropReward(
@@ -309,29 +333,28 @@ async function drops_unlocked_reward() {
     }
   );
 
-  const vendorAccount = await main_staking_program.account.rewardVendor(
-    unlockedVendor.publicKey
-  );
+  const vendorAccount = await main_staking_program.account.rewardVendor(unlockedVendor.publicKey);
+  const rewardQAccount = await main_staking_program.account.rewardQueue(rewardQ.publicKey);
 
-  // console.log("vendorAccount: ", vendorAccount);
-  console.log("vendorAccount: ");
-
-  const rewardQAccount = await main_staking_program.account.rewardQueue(
-    rewardQ.publicKey
-  );
-  // console.log("rewardQAccount: ", rewardQAccount);
-  // console.log("unlockedVendor: ", unlockedVendor);
-
-  console.log("rewardQAccount: ");
-  console.log("unlockedVendor: ");
+  await printVendor("vendorAccount", vendorAccount);
+  console.log("rewardQAccount: ", rewardQAccount.toString());
+  console.log("###########")
+  console.log("")
 }
 
 async function collects_unlocked_reward() {
+
+  console.log("&&&&&&&&&&");
+  console.log("invoke claim unlocked reward");
+
   const token = await serumCmn.createTokenAccount(
     provider,
     mint,
     owner
   );
+
+  console.log("Token account: ", token.toBase58(), " ", await balance(token));
+
   await main_staking_program.rpc.claimReward({
     accounts: {
       to: token,
@@ -354,11 +377,12 @@ async function collects_unlocked_reward() {
   });
 
   let tokenAccount = await serumCmn.getTokenAccount(provider, token);
-  // console.log("tokenAccount: ", tokenAccount);
-  console.log("tokenAccount: ");
   const memberAccount = await main_staking_program.account.member(member.publicKey);
-  // console.log("memberAccount: ", memberAccount);
-  console.log("memberAccount 2: ");
+
+  await printStructInfo("tokenAccount", tokenAccount);
+  await printMemberAccountInfo("memberAccount", memberAccount);
+  console.log("&&&&&&&&&&")
+  console.log("")
 }
 
 async function unstacks_unlocked() {
@@ -403,10 +427,6 @@ async function unstacks_unlocked() {
     memberAccount.balances.spt
   );
 
-  // console.log("vaultPendingWithdraw: ", vaultPendingWithdraw);
-  // console.log("vaultStake: ", vaultStake);
-  // console.log("spt: ", spt);
-
   console.log("vaultPendingWithdraw: ", vaultPendingWithdraw.toString());
   console.log("vaultStake: ", vaultStake.toString());
   console.log("spt: ", spt.toString());
@@ -415,19 +435,7 @@ async function unstacks_unlocked() {
 async function try_end_unstake() {
 
   console.log("#########")
-  console.log("#########")
-  console.log("#########")
-  console.log("Balance of registrar.publicKey: ", registrar.publicKey.toBase58(), " ", await balance(registrar.publicKey));
-  console.log("Balance of member.publicKey: ", member.publicKey.toBase58(), " ", await balance(member.publicKey));
-  console.log("Balance of pendingWithdrawal.publicKey: ", pendingWithdrawal.publicKey.toBase58(), " ", await balance(pendingWithdrawal.publicKey));
-
-  console.log("Balance of balances.vault: ", balances.vault.toString(), " ", await balance(balances.vault));
-  console.log("Balance of balances.vaultPendingWithdraw: ", balances.vaultPendingWithdraw.toString(), " ", await balance(balances.vaultPendingWithdraw));
-  console.log("Balance of memberSigner: ", memberSigner.toString(), " ", await balance(memberSigner));
-  console.log("#########")
-  console.log("#########")
-  console.log("#########")
-  console.log("Start call end unstake")
+  console.log("invoke end_unstake")
 
   let tx;
   try {
@@ -452,8 +460,9 @@ async function try_end_unstake() {
     console.log("Error when call end unstake: ", e)
   }
 
-
-  console.log(tx)
+  console.log("End endUnstake")
+  console.log("#########")
+  console.log("")
 }
 
 async function unstake_finalizes_unlocked() {
@@ -510,7 +519,8 @@ async function balance(address) {
 }
 
 async function sendSol(receiver, amount) {
-  const tx = new anchor.web3.Transaction().add(
+  console.log(" from: ", owner.toBase58(), "to receiver: ", receiver.toString(), " Sending: ", amount);
+  const transferTx = new anchor.web3.Transaction().add(
     anchor.web3.SystemProgram.transfer({
       fromPubkey: owner,
       toPubkey: receiver,
@@ -518,14 +528,45 @@ async function sendSol(receiver, amount) {
     }),
   );
 
-  const res = await provider.connection.sendTransaction(tx, [provider.wallet.payer]);
-
+  await provider.connection.sendTransaction(transferTx, [provider.wallet.payer]);
   await sleep(500);
+}
 
-  console.log("Receipt: ", res);
-  console.log("from: ", owner.toBase58(), "to receiver: ", receiver.toString(), " Sent: ", amount);
-  console.log("Balance of owner: ", await balance(owner));
-  console.log("Balance of receiver: ", await balance(receiver));
+async function printStructInfo(name, v) {
+  console.log(" ", name);
+  console.log("   mint: ", v.mint.toBase58(), " ", await balance(v.mint));
+  console.log("   owner: ", v.owner.toBase58(), " ", await balance(v.owner));
+  console.log("   amount: ", v.amount.toString());
+  console.log("   delegated amount: ", v.delegatedAmount.toString());
+}
+
+async function printMemberAccountInfo(name, v) {
+  console.log("  ", name);
+  console.log("   registrar: ", v.registrar.toBase58(), " ", await balance(v.registrar));
+  console.log("   beneficiary: ", v.beneficiary.toBase58(), " ", await balance(v.beneficiary));
+  console.log("   metadata: ", v.metadata.toBase58(), " ", await balance(v.metadata));
+  await printBalance("member.balances", v.balances);
+  await printBalance("member.balancesLocked", v.balancesLocked);
+}
+
+async function printVendor(name, v) {
+  console.log("  ", name);
+  console.log("   registrar: ", v.registrar.toBase58(), " ", await balance(v.registrar));
+  console.log("   vault: ", v.vault.toBase58(), " ", await balance(v.vault));
+  console.log("   mint: ", v.mint.toBase58(), " ", await balance(v.mint));
+  console.log("   from: ", v.from.toBase58(), " ", await balance(v.from));
+
+  console.log("   poolTokenSupply: ", v.poolTokenSupply.toString());
+  console.log("   total: ", v.total.toString());
+  console.log("   kind: ", JSON.stringify(v.kind));
+}
+
+async function printBalance(name, v) {
+  console.log("    ", name);
+  console.log("        spt: ", v.spt.toBase58(), " ", await balance(v.spt));
+  console.log("        vault: ", v.vault.toBase58(), " ", await balance(v.vault));
+  console.log("        vaultStake: ", v.vaultStake.toBase58(), " ", await balance(v.vaultStake));
+  console.log("        vaultPendingWithdraw: ", v.vaultPendingWithdraw.toBase58(), " ", await balance(v.vaultPendingWithdraw));
 }
 
 console.log('Running client.');

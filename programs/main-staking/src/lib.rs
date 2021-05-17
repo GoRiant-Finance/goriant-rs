@@ -84,6 +84,7 @@ mod main_staking {
 
     // Deposits that can only come directly from the member beneficiary.
     pub fn deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
+        msg!("Hello deposit");
         token::transfer(ctx.accounts.into(), amount).map_err(Into::into)
     }
 
@@ -172,6 +173,7 @@ mod main_staking {
         };
 
         // Program signer.
+        msg!("Program signer");
         let seeds = &[
             ctx.accounts.registrar.to_account_info().key.as_ref(),
             ctx.accounts.member.to_account_info().key.as_ref(),
@@ -180,6 +182,7 @@ mod main_staking {
         let member_signer = &[&seeds[..]];
 
         // Burn pool tokens.
+        msg!("Burn pool tokens");
         {
             let cpi_ctx = CpiContext::new_with_signer(
                 ctx.accounts.token_program.clone(),
@@ -194,11 +197,13 @@ mod main_staking {
         }
 
         // Convert from stake-token units to mint-token units.
+        msg!("Convert");
         let token_amount = spt_amount
             .checked_mul(ctx.accounts.registrar.stake_rate)
             .unwrap();
 
         // Transfer tokens from the stake to pending vault.
+        msg!("Transfer tokens");
         {
             let cpi_ctx = CpiContext::new_with_signer(
                 ctx.accounts.token_program.clone(),
@@ -213,6 +218,7 @@ mod main_staking {
         }
 
         // Print receipt.
+        msg!("Print receipt");
         let pending_withdrawal = &mut ctx.accounts.pending_withdrawal;
         pending_withdrawal.burned = false;
         pending_withdrawal.member = *ctx.accounts.member.to_account_info().key;
@@ -225,6 +231,7 @@ mod main_staking {
         pending_withdrawal.locked = locked;
 
         // Update stake timestamp.
+        msg!("Update stake timestamp");
         let member = &mut ctx.accounts.member;
         member.last_stake_ts = ctx.accounts.clock.unix_timestamp;
 
@@ -310,6 +317,7 @@ mod main_staking {
         expiry_receiver: Pubkey,
         nonce: u8,
     ) -> Result<()> {
+        msg!("Hello drop reward");
         if total < ctx.accounts.pool_mint.supply {
             return Err(ErrorCode::InsufficientReward.into());
         }
@@ -318,6 +326,7 @@ mod main_staking {
         }
 
         // Transfer funds into the vendor's vault.
+        msg!(&format!("drop_reward: Transfer funds into the vendor's vault - {}", total));
         token::transfer(ctx.accounts.into(), total)?;
 
         // Add the event to the reward queue.
@@ -349,20 +358,24 @@ mod main_staking {
 
     #[access_control(reward_eligible(&ctx.accounts.cmn))]
     pub fn claim_reward(ctx: Context<ClaimReward>) -> Result<()> {
+        msg!("Hello claim reward");
         if RewardVendorKind::Unlocked != ctx.accounts.cmn.vendor.kind {
             return Err(ErrorCode::ExpectedUnlockedVendor.into());
         }
         // Reward distribution.
-        let spt_total =
-            ctx.accounts.cmn.balances.spt.amount + ctx.accounts.cmn.balances_locked.spt.amount;
+        msg!("Reward distribution");
+        let spt_total = ctx.accounts.cmn.balances.spt.amount;
+        msg!("Reward distribution 1");
         let reward_amount = spt_total
             .checked_mul(ctx.accounts.cmn.vendor.total)
             .unwrap()
             .checked_div(ctx.accounts.cmn.vendor.pool_token_supply)
             .unwrap();
+        msg!("Reward distribution 2");
         assert!(reward_amount > 0);
 
         // Send reward to the given token account.
+        msg!("Send reward to the given token account");
         let seeds = &[
             ctx.accounts.cmn.registrar.to_account_info().key.as_ref(),
             ctx.accounts.cmn.vendor.to_account_info().key.as_ref(),
@@ -381,6 +394,7 @@ mod main_staking {
         token::transfer(cpi_ctx, reward_amount)?;
 
         // Update member as having processed the reward.
+        msg!("Update member as having processed the reward");
         let member = &mut ctx.accounts.cmn.member;
         member.rewards_cursor = ctx.accounts.cmn.vendor.reward_event_q_cursor + 1;
 
