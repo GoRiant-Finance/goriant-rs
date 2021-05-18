@@ -4,8 +4,12 @@
   "tokenId": "5xvDvM1h4bdbknWHp8veCvB76PnXpHgYo7QeZQep7v1d",
   "vaultId": "7Ba3vxXDqE4RMFgNsADfrKyDZMF13LwEsdMdzxbhPBHK",
 
-  "registrarPublicKey": "4oZpr3A1RVdpw2QXjyby1cK35hkmopNrp75SVpTw888p",
+  "poolMint": "A9ZSqDPfMohEQ1zCjVRMzb37iemrHPMZWCPnDM44trEZ",
+
+  "registrarSigner": "2QKJq5LdPcfMiqLcYcUcbS4cNDBGy3jjMt1V82rgL62f",
+
+  "registrarId": "E1b5dphRTuLUoGybws3KckDg6RtvTrhkigHb4cjYxeZM",
   "registrar_authority": "FY3QHJREKMii9jgQCTa7bthUHZ1X6Gsbz8PWtcmcUXrd",
-  "registrar_rewardEventQ": "8Rt32EPRzcTK2p4so5eTHdsTW7fqpCRGnEJPBhDXi3xu",
+  "registrar_rewardEventQ": "GX39vgnASTq6UuUzw1h5kNyYwt3zYSSbJGyFvTUbx13e",
   "registrar_mint": "5xvDvM1h4bdbknWHp8veCvB76PnXpHgYo7QeZQep7v1d"
 }
