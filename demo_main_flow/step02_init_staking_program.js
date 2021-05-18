@@ -120,14 +120,6 @@ async function initialize_registrar() {
   console.log("----------------------------------------");
 }
 
-async function printBalance(name, v) {
-  console.log("    ", name);
-  console.log("        spt: ", v.spt.toBase58(), " ", await utils.balance(v.spt));
-  console.log("        vault: ", v.vault.toBase58(), " ", await utils.balance(v.vault));
-  console.log("        vaultStake: ", v.vaultStake.toBase58(), " ", await utils.balance(v.vaultStake));
-  console.log("        vaultPendingWithdraw: ", v.vaultPendingWithdraw.toBase58(), " ", await utils.balance(v.vaultPendingWithdraw));
-}
-
 async function log_state() {
   console.log("#########################")
   console.log("Start Log State")
@@ -153,8 +145,8 @@ async function log_state() {
   else console.log("poolMint: ", poolMint);
   console.log("memberAccount: ", memberAccount);
   console.log("memberSigner: ", memberSigner);
-  if (balances) await printBalance("balances", balances);
-  if (balancesLocked) await printBalance("balancesLocked", balancesLocked);
+  if (balances) await utils.printBalance("balances", balances);
+  if (balancesLocked) await utils.printBalance("balancesLocked", balancesLocked);
   console.log("unlockedVendorSigner: ", unlockedVendorSigner);
 
   console.log("")
