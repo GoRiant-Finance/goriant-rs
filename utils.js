@@ -67,6 +67,40 @@ async function balance(address) {
   return provider.connection.getBalance(address);
 }
 
+async function printMemberAccountInfo(name, v) {
+  console.log("  ", name);
+  console.log("   registrar: ", v.registrar.toBase58(), " ", await balance(v.registrar));
+  console.log("   beneficiary: ", v.beneficiary.toBase58(), " ", await balance(v.beneficiary));
+  console.log("   metadata: ", v.metadata.toBase58(), " ", await balance(v.metadata));
+  await printBalance("member.balances", v.balances);
+  await printBalance("member.balancesLocked", v.balancesLocked);
+}
+
+
+async function printStructInfo(name, v) {
+  console.log(" ", name);
+  console.log("   mint: ", v.mint.toBase58(), " ", await balance(v.mint));
+  console.log("   owner: ", v.owner.toBase58(), " ", await balance(v.owner));
+  console.log("   amount: ", v.amount.toString());
+  console.log("   delegated amount: ", v.delegatedAmount.toString());
+}
+
+async function printRegistrar(name, v) {
+  console.log("    ", name)
+  console.log("        registrarAccount.authority: ", v.authority.toBase58(), " ", await balance(v.authority));
+  console.log("        registrarAccount.rewardEventQ: ", v.rewardEventQ.toBase58(), " ", await balance(v.rewardEventQ));
+  console.log("        registrarAccount.mint: ", v.mint.toBase58(), " ", await balance(v.mint));
+  console.log("        registrarAccount.poolMint: ", v.poolMint.toBase58(), " ", await balance(v.poolMint));
+}
+
+async function printBalance(name, v) {
+  console.log("    ", name);
+  console.log("        spt: ", v.spt.toBase58(), " ", await balance(v.spt));
+  console.log("        vault: ", v.vault.toBase58(), " ", await balance(v.vault));
+  console.log("        vaultStake: ", v.vaultStake.toBase58(), " ", await balance(v.vaultStake));
+  console.log("        vaultPendingWithdraw: ", v.vaultPendingWithdraw.toBase58(), " ", await balance(v.vaultPendingWithdraw));
+}
+
 module.exports = {
-  createBalanceSandbox, balance
+  createBalanceSandbox, balance, printBalance, printRegistrar, printStructInfo, printMemberAccountInfo
 };
