@@ -6,6 +6,6 @@
     "@project-serum/serum": "^0.13.34"
   },
   "scripts": {
-    "start" : "nohup node main_staking_client.js > output.log"
+    "start" : "nohup node main_staking_client.js > output.out"
   }
 }
