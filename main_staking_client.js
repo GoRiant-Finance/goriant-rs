@@ -44,9 +44,12 @@ let unlockedVendorSigner = null;
 
 async function log_state() {
   console.log("main_staking_program_id: ", main_staking_program_id.toBase58() , " " , await balance(main_staking_program_id));
-  console.log("owner: ", owner.toBase58(), " " , await balance(owner));
-  console.log("mint: ", mint.toBase58(), " " , await balance(mint));
-  console.log("god: " , god.toBase58(), " " , await balance(god));
+  if (owner) console.log("owner: ", owner.toBase58(), " " , await balance(owner));
+  else console.log("owner: ", owner);
+  if (mint) console.log("mint: ", mint.toBase58(), " " , await balance(mint));
+  else console.log("mint: ", mint);
+  if (god) console.log("god: " , god.toBase58(), " " , await balance(god));
+  else console.log("god: ", god);
   console.log("registrar: " , registrar.publicKey.toBase58());
   console.log("rewardQ: " , rewardQ.publicKey.toBase58());
   console.log("member: " , member.publicKey.toBase58());
@@ -54,9 +57,11 @@ async function log_state() {
   console.log("unlockedVendor: " , unlockedVendor.publicKey.toBase58());
   console.log("unlockedVendorVault: " , unlockedVendorVault.publicKey.toBase58());
   console.log("registrarAccount: ", registrarAccount);
-  console.log("registrarSigner: " , registrarSigner.toBase58() , " " , await balance(registrarSigner));
+  if (registrarSigner) console.log("registrarSigner: " , registrarSigner.toBase58() , " " , await balance(registrarSigner));
+  else console.log("registrarSigner: ", registrarSigner);
   console.log("nonce: " , nonce);
-  console.log("poolMint: " , poolMint.toBase58() , " " , await balance(poolMint));
+  if (poolMint) console.log("poolMint: " , poolMint.toBase58() , " " , await balance(poolMint));
+  else console.log("poolMint: ", poolMint);
   console.log("memberAccount: ", memberAccount);
   console.log("memberSigner: " , memberSigner);
   if (balances) await printBalance("balances", balances);
@@ -76,6 +81,7 @@ async function log_state() {
 async function main() {
   console.log("----------------------------------------");
   console.log("Start Setup")
+  await log_state();
   await load_program();
   await set_up_state();
   await create_registry_genesis();
