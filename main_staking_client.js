@@ -42,49 +42,77 @@ let balancesLocked = null;
 
 let unlockedVendorSigner = null;
 
+async function log_state() {
+  console.log("main_staking_program_id: ", main_staking_program_id.toBase58() , " " , await balance(main_staking_program_id));
+  console.log("owner: ", owner.toBase58(), " " , await balance(owner));
+  console.log("mint: ", mint.toBase58(), " " , await balance(mint));
+  console.log("god: " , god.toBase58(), " " , await balance(god));
+  console.log("registrar: " , registrar.publicKey.toBase58());
+  console.log("rewardQ: " , rewardQ.publicKey.toBase58());
+  console.log("member: " , member.publicKey.toBase58());
+  console.log("pendingWithdrawal: " , pendingWithdrawal.publicKey.toBase58());
+  console.log("unlockedVendor: " , unlockedVendor.publicKey.toBase58());
+  console.log("unlockedVendorVault: " , unlockedVendorVault.publicKey.toBase58());
+  console.log("registrarAccount: ", registrarAccount);
+  console.log("registrarSigner: " , registrarSigner.toBase58() , " " , await balance(registrarSigner));
+  console.log("nonce: " , nonce);
+  console.log("poolMint: " , poolMint.toBase58() , " " , await balance(poolMint));
+  console.log("memberAccount: ", memberAccount);
+  console.log("memberSigner: " , memberSigner);
+  if (balances) await printBalance("balances", balances);
+  if (balancesLocked) await printBalance("balancesLocked", balancesLocked);
+  console.log("unlockedVendorSigner: " , unlockedVendorSigner);
+
+  // console.log("registrarAccount.authority: ", registrarAccount.authority.toString(), " ", await balance(registrarAccount.authority));
+  // console.log("registrarAccount.rewardEventQ: ", registrarAccount.rewardEventQ.toString(), " ", await balance(registrarAccount.rewardEventQ));
+  // console.log("registrarAccount.mint: ", registrarAccount.mint.toString(), " ", await balance(registrarAccount.mint));
+  // console.log("registrarAccount.stakeRate: ", registrarAccount.stakeRate.toString(), "%");
+  // console.log("registrarAccount.withdrawalTimelock: ", registrarAccount.withdrawalTimelock.toString());
+
+
+
+}
+
 async function main() {
   console.log("----------------------------------------");
-
   console.log("Start Setup")
   await load_program();
-
   await set_up_state();
-
   await create_registry_genesis();
-
+  await log_state();
   console.log("End Setup")
-  console.log("")
   console.log("----------------------------------------");
 
   // Tạo pool stake chung
   await initialize_registrar();
-
+  await log_state();
   // Đăng kí để stake
   await create_member();
-
+  await log_state();
   // Nạp tiền vào tài khoản trong pool stake
   await deposit_unlocked_member();
-
+  await log_state();
   // Thực hiện stake
   await stake_unlocked_member();
-
+  await log_state();
   // Nhà đầu tư abc đổ tiền vào làm phần thưởng cho các staker
   await drops_unlocked_reward();
-
+  await log_state();
   // Staker vào harvest lợi nhuận từ nhà đầu tư
   await collects_unlocked_reward();
-
+  await log_state();
   // Staker yêu cầu unstake
   await unstacks_unlocked();
-
+  await log_state();
   console.log("wait 5 seconds .....");
   await sleep(5000);
 
   // Staker kết thúc unstake -> tiền về tài khoản pool stake
   await unstake_finalizes_unlocked();
-
+  await log_state();
   // Rút tiền từ pool stake ra ví ngoài
   await withdraws_deposits_unlocked();
+  await log_state();
 }
 
 async function load_program() {

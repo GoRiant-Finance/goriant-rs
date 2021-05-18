@@ -4,5 +4,8 @@
     "@project-serum/common": "^0.0.1-beta.3",
     "@solana/spl-token": "*",
     "@project-serum/serum": "^0.13.34"
+  },
+  "scripts": {
+    "start" : "nohup node main_staking_client.js > output.log"
   }
 }
