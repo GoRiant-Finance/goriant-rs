@@ -1,6 +1,8 @@
 const anchor = require("@project-serum/anchor");
 const serumCmn = require("@project-serum/common");
 
+const provider = anchor.Provider.local('https://api.devnet.solana.com');
+
 async function createBalanceSandbox(provider, r, registrySigner) {
   const spt = new anchor.web3.Account();
   const vault = new anchor.web3.Account();
@@ -61,6 +63,10 @@ async function createBalanceSandbox(provider, r, registrySigner) {
   ];
 }
 
+async function balance(address) {
+  return provider.connection.getBalance(address);
+}
+
 module.exports = {
-  createBalanceSandbox,
+  createBalanceSandbox, balance
 };

@@ -1,1 +1,11 @@
-{"programId":"Ger7rcLu1nscJ2cFRHk6XfZdEfGL8tdhyyQDGsXUYQdE"}
+{
+  "programId": "Ger7rcLu1nscJ2cFRHk6XfZdEfGL8tdhyyQDGsXUYQdE",
+  "owner": "FY3QHJREKMii9jgQCTa7bthUHZ1X6Gsbz8PWtcmcUXrd",
+  "tokenId": "5xvDvM1h4bdbknWHp8veCvB76PnXpHgYo7QeZQep7v1d",
+  "vaultId": "7Ba3vxXDqE4RMFgNsADfrKyDZMF13LwEsdMdzxbhPBHK",
+
+  "registrarPublicKey": "4oZpr3A1RVdpw2QXjyby1cK35hkmopNrp75SVpTw888p",
+  "registrar_authority": "FY3QHJREKMii9jgQCTa7bthUHZ1X6Gsbz8PWtcmcUXrd",
+  "registrar_rewardEventQ": "8Rt32EPRzcTK2p4so5eTHdsTW7fqpCRGnEJPBhDXi3xu",
+  "registrar_mint": "5xvDvM1h4bdbknWHp8veCvB76PnXpHgYo7QeZQep7v1d"
+}
