@@ -14,7 +14,7 @@ const main_staking_idl = JSON.parse(fs.readFileSync('../target/idl/main_staking.
 let main_staking_program = null;
 
 const owner = provider.wallet.publicKey;
-//--------
+// current accounts
 const mint = new anchor.web3.PublicKey(config.tokenId);
 const god = new anchor.web3.PublicKey(config.vaultId);
 const registrar = new anchor.web3.PublicKey(config.registrarId);
@@ -29,6 +29,7 @@ let memberAccount;
 let balances;
 let balancesLocked;
 
+// new accounts
 const member = new anchor.web3.Account();
 
 
@@ -105,16 +106,13 @@ async function create_member() {
   let txSigs = await provider.sendAll(allTxs);
 
   memberAccount = await main_staking_program.account.member(member.publicKey);
-
-  // await utils.printBalance("balances", balances);
-  // await utils.printBalance("balancesLocked", balancesLocked);
   console.log("----------------------------------------");
 }
 
 async function deposit_unlocked_member() {
   console.log("########");
-  console.log("invoke deposit 120 Token")
-  const depositAmount = new anchor.BN(120);
+  console.log("invoke deposit Token")
+  const depositAmount = new anchor.BN(8888);
 
   await main_staking_program.rpc.deposit(depositAmount, {
     accounts: {
@@ -141,7 +139,7 @@ async function deposit_unlocked_member() {
 async function stake_unlocked_member() {
   console.log("****************")
   console.log("invoke stake for unlocked member")
-  const stakeAmount = new anchor.BN(10);
+  const stakeAmount = new anchor.BN(2222);
 
   await main_staking_program.rpc.stake(stakeAmount, false, {
     accounts: {

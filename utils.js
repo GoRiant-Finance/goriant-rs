@@ -101,6 +101,25 @@ async function printBalance(name, v) {
   console.log("        vaultPendingWithdraw: ", v.vaultPendingWithdraw.toBase58(), " ", await balance(v.vaultPendingWithdraw));
 }
 
+async function printVendor(name, v) {
+  console.log("  ", name);
+  console.log("   registrar: ", v.registrar.toBase58(), " ", await balance(v.registrar));
+  console.log("   vault: ", v.vault.toBase58(), " ", await balance(v.vault));
+  console.log("   mint: ", v.mint.toBase58(), " ", await balance(v.mint));
+  console.log("   from: ", v.from.toBase58(), " ", await balance(v.from));
+
+  console.log("   poolTokenSupply: ", v.poolTokenSupply.toString());
+  console.log("   total: ", v.total.toString());
+  console.log("   kind: ", JSON.stringify(v.kind));
+}
+
+async function sleep(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+
 module.exports = {
-  createBalanceSandbox, balance, printBalance, printRegistrar, printStructInfo, printMemberAccountInfo
+  sleep, createBalanceSandbox, balance, printBalance, printRegistrar, printStructInfo, printMemberAccountInfo, printVendor
 };

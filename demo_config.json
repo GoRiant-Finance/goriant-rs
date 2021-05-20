@@ -1,0 +1,22 @@
+{
+  "programId": "Ger7rcLu1nscJ2cFRHk6XfZdEfGL8tdhyyQDGsXUYQdE",
+  "owner": "FY3QHJREKMii9jgQCTa7bthUHZ1X6Gsbz8PWtcmcUXrd",
+  "tokenId": "5xvDvM1h4bdbknWHp8veCvB76PnXpHgYo7QeZQep7v1d",
+  "vaultId": "7Ba3vxXDqE4RMFgNsADfrKyDZMF13LwEsdMdzxbhPBHK",
+
+  "poolMint": "A9ZSqDPfMohEQ1zCjVRMzb37iemrHPMZWCPnDM44trEZ",
+
+  "registrarSigner": "2QKJq5LdPcfMiqLcYcUcbS4cNDBGy3jjMt1V82rgL62f",
+
+  "registrarId": "E1b5dphRTuLUoGybws3KckDg6RtvTrhkigHb4cjYxeZM",
+  "registrar_authority": "FY3QHJREKMii9jgQCTa7bthUHZ1X6Gsbz8PWtcmcUXrd",
+  "registrar_rewardEventQ": "GX39vgnASTq6UuUzw1h5kNyYwt3zYSSbJGyFvTUbx13e",
+  "registrar_mint": "5xvDvM1h4bdbknWHp8veCvB76PnXpHgYo7QeZQep7v1d",
+
+  "memberId": "5WHTRzfY3J4dxTz8PdCmNSu1fT7z8bPMdhUSenNMZpWv",
+  "memberSignerId": "HDhcn5hYNC34qvtRy18Z5xrWKPGHySpR23ezAHRE3UEh",
+
+  "unlockVendorId": "HyL1rhNfewWTW6XDmhX1fazgy4NJ1EY7vYRsiBajtRwA",
+  "unlockedVendorVaultId": "6ufS6M4tFwAbSYCnTHC1EhQVB7raYgHUoESDcwBJvsXG",
+  "unlockedVendorSignerId": "7W8gh3mksy7ChrZ2jNXicRnVcJXnsBDNfxGeurVWqoqU"
+}

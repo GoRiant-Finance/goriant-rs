@@ -5,7 +5,7 @@ const provider = anchor.Provider.local('https://api.devnet.solana.com');
 
 anchor.setProvider(provider);
 
-async function step01_issue_token() {
+async function issue_token_and_mint_1_millions() {
   const [mint, god] = await serumCmn.createMintAndVault(
     provider,
     new anchor.BN(1000000)
@@ -15,4 +15,4 @@ async function step01_issue_token() {
   console.log("Vault address: ", god.toBase58())
 }
 
-step01_issue_token()
+issue_token_and_mint_1_millions().then(r => console.log(r) )
