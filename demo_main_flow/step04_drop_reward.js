@@ -1,30 +1,30 @@
 const anchor = require("@project-serum/anchor");
 const serumCmn = require("@project-serum/common");
 const TokenInstructions = require("@project-serum/serum").TokenInstructions;
-const utils = require("../utils");
+const utils = require("./utils");
 const fs = require('fs');
 const config = JSON.parse(fs.readFileSync('../config.json', 'utf8'));
 //----------------
-const main_staking_program_id = new anchor.web3.PublicKey(config.programId);
 const provider = anchor.Provider.local('https://api.devnet.solana.com');
 anchor.setProvider(provider);
 
 const main_staking_idl = JSON.parse(fs.readFileSync('../target/idl/main_staking.json', 'utf8'));
 
-let main_staking_program = null;
-
 const owner = provider.wallet.publicKey;
 
-// current accounts from config
-const mint = new anchor.web3.PublicKey(config.tokenId);
-const god = new anchor.web3.PublicKey(config.vaultId);
-const registrar = new anchor.web3.PublicKey(config.registrarId);
-const rewardQ = new anchor.web3.PublicKey(config.registrar_rewardEventQ);
-const registrarSigner = new anchor.web3.PublicKey(config.registrarSigner);
-const poolMint = new anchor.web3.PublicKey(config.poolMint);
-const member = new anchor.web3.PublicKey(config.memberId);
+let main_staking_program_id;
+let main_staking_program;
 
+// current accounts from config
+let mint;
+let god;
+let registrar;
+let rewardQ;
+let registrarSigner;
+let poolMint;
+let member;
 let memberSigner;
+
 let nonce;
 let balances;
 let balancesLocked;
@@ -44,13 +44,60 @@ async function main() {
 
   await drops_unlocked_reward();
   await log_state();
+
+  await writeConfig();
 }
 
+async function writeConfig() {
+
+  const config = await utils.readConfig();
+
+  config.token = mint.toBase58();
+  config.vault = god.toBase58();
+
+  config.poolMint = poolMint.toString();
+
+  config.registrar = registrar.toBase58();
+  config.registrarSigner = registrarSigner.toString();
+  config.registrar_authority = registrarAccount.authority.toBase58();
+  config.registrar_rewardEventQ = registrarAccount.rewardEventQ.toBase58();
+  config.registrar_mint = registrarAccount.mint.toBase58();
+
+  config.member = member.toBase58();
+  config.memberSigner = memberSigner.toBase58();
+
+  config.unlockedVendor = unlockedVendor.publicKey.toBase58();
+  config.unlockedVendorVault = unlockedVendorVault.publicKey.toBase58();
+  config.unlockedVendorSigner = unlockedVendorSigner.toString();
+
+  console.log("Write config: ", config);
+  await utils.writeConfig(config);
+}
+
+
 async function load_context() {
+
+  const config = await utils.readConfig();
+
+  main_staking_program_id = new anchor.web3.PublicKey(config.programId);
   main_staking_program = new anchor.Program(main_staking_idl, main_staking_program_id);
 
+
+  mint = new anchor.web3.PublicKey(config.token);
+  god = new anchor.web3.PublicKey(config.vault);
+
+  registrar = new anchor.web3.PublicKey(config.registrar);
+  rewardQ = new anchor.web3.PublicKey(config.registrar_rewardEventQ);
+  registrarSigner = new anchor.web3.PublicKey(config.registrarSigner);
+  poolMint = new anchor.web3.PublicKey(config.poolMint);
+
+  member = new anchor.web3.PublicKey(config.member);
+  memberSigner = new anchor.web3.PublicKey(config.memberSigner);
+
+  // read program data from Solana by member & registrar pubkey
   memberAccount = await main_staking_program.account.member(member);
   registrarAccount = await main_staking_program.account.registrar(registrar);
+
 }
 
 async function drops_unlocked_reward() {
@@ -133,7 +180,7 @@ async function log_state() {
   if (poolMint) console.log("poolMint: ", poolMint.toBase58(), " ", await utils.balance(poolMint));
   else console.log("poolMint: ", poolMint);
   if (memberAccount) await utils.printMemberAccountInfo("memberAccount: ", memberAccount);
-  if(memberSigner) console.log("memberSigner: ", memberSigner.toString());
+  if (memberSigner) console.log("memberSigner: ", memberSigner.toString());
   if (balances) await utils.printBalance("balances", balances);
   if (balancesLocked) await utils.printBalance("balancesLocked", balancesLocked);
   if (unlockedVendor) console.log("unlockedVendor: ", unlockedVendor.publicKey.toBase58());

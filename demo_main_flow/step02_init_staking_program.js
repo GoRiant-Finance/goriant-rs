@@ -1,22 +1,22 @@
 const anchor = require("@project-serum/anchor");
 const serumCmn = require("@project-serum/common");
-const utils = require("../utils");
+const utils = require("./utils");
 const fs = require('fs');
-const config = JSON.parse(fs.readFileSync('../config.json', 'utf8'));
 //----------------
-const main_staking_program_id = new anchor.web3.PublicKey(config.programId);
 const provider = anchor.Provider.local('https://api.devnet.solana.com');
 anchor.setProvider(provider);
 
-const main_staking_idl = JSON.parse(fs.readFileSync('../target/idl/main_staking.json', 'utf8'));
-
-let main_staking_program = null;
-
-//--------
 const owner = provider.wallet.publicKey;
 
-let mint = new anchor.web3.PublicKey(config.tokenId);
-let god = new anchor.web3.PublicKey(config.vaultId);
+const main_staking_idl = JSON.parse(fs.readFileSync('../target/idl/main_staking.json', 'utf8'));
+
+let main_staking_program_id;
+let main_staking_program;
+
+//--------
+
+let mint;
+let god;
 
 const registrar = new anchor.web3.Account();
 const rewardQ = new anchor.web3.Account();
@@ -45,28 +45,52 @@ let unlockedVendorSigner = null;
 async function main() {
   console.log("----------------------------------------");
   console.log("Start Setup")
+  await load_context();
   await log_state();
-
-  await load_program();
 
   // bước này làm gì em ? :D
   await create_registry_genesis();
-
   await log_state();
-  console.log("End Setup")
-  console.log("----------------------------------------");
 
   // Tạo pool stake chung
   await initialize_registrar();
-
   await log_state();
+
+  await writeConfig();
+  console.log("----------------------------------------");
 }
 
-async function load_program() {
+async function writeConfig() {
+  const config = await utils.readConfig();
+
+  config.token = mint.toBase58();
+  config.vault = god.toBase58();
+
+  config.poolMint = poolMint.toString();
+
+  config.registrar = registrar.publicKey.toBase58();
+  config.registrarSigner = registrarSigner.toString();
+  config.registrar_authority = registrarAccount.authority.toBase58();
+  config.registrar_rewardEventQ = registrarAccount.rewardEventQ.toBase58();
+  config.registrar_mint = registrarAccount.mint.toBase58();
+
+  console.log("Write config: ", config);
+  await utils.writeConfig(config);
+}
+
+async function load_context() {
+  const config = await utils.readConfig();
+
+  main_staking_program_id = new anchor.web3.PublicKey(config.programId);
   main_staking_program = new anchor.Program(main_staking_idl, main_staking_program_id);
+
+  mint = new anchor.web3.PublicKey(config.token);
+  god = new anchor.web3.PublicKey(config.vault);
 }
 
 async function create_registry_genesis() {
+  console.log("----------------------------------------");
+  console.log("create_registry_genesis");
   const [
     _registrarSigner,
     _nonce,
@@ -82,9 +106,12 @@ async function create_registry_genesis() {
   console.log(" poolMint: ", poolMint.toBase58(), " ", await utils.balance(poolMint));
   console.log(" registrarSigner: ", registrarSigner.toBase58(), " ", await utils.balance(registrarSigner));
   console.log(" nonce: ", nonce);
+  console.log("----------------------------------------");
 }
 
 async function initialize_registrar() {
+  console.log("----------------------------------------");
+  console.log("initialize_registrar")
   await main_staking_program.rpc.initialize(
     mint,
     owner,
@@ -110,34 +137,30 @@ async function initialize_registrar() {
   registrarAccount = await main_staking_program.account.registrar(registrar.publicKey);
 
   console.log("----------------------------------------");
-  console.log("init staking program")
-  console.log("registrar.publicKey: ", registrar.publicKey.toString(), " ", await utils.balance(registrar.publicKey));
-  console.log("registrarAccount.authority: ", registrarAccount.authority.toString(), " ", await utils.balance(registrarAccount.authority));
-  console.log("registrarAccount.rewardEventQ: ", registrarAccount.rewardEventQ.toString(), " ", await utils.balance(registrarAccount.rewardEventQ));
-  console.log("registrarAccount.mint: ", registrarAccount.mint.toString(), " ", await utils.balance(registrarAccount.mint));
-  console.log("registrarAccount.stakeRate: ", registrarAccount.stakeRate.toString(), "%");
-  console.log("registrarAccount.withdrawalTimelock: ", registrarAccount.withdrawalTimelock.toString());
-  console.log("----------------------------------------");
 }
 
 async function log_state() {
   console.log("#########################")
   console.log("Start Log State")
   console.log("")
-  console.log("main_staking_program_id: ", main_staking_program_id.toBase58(), " ", await utils.balance(main_staking_program_id));
+  if (main_staking_program_id) console.log("main_staking_program_id: ", main_staking_program_id.toBase58(), " ", await utils.balance(main_staking_program_id));
   if (owner) console.log("owner: ", owner.toBase58(), " ", await utils.balance(owner));
   else console.log("owner: ", owner);
   if (mint) console.log("mint: ", mint.toBase58(), " ", await utils.balance(mint));
   else console.log("mint: ", mint);
   if (god) console.log("god: ", god.toBase58(), " ", await utils.balance(god));
   else console.log("god: ", god);
+
   console.log("registrar: ", registrar.publicKey.toBase58());
   console.log("rewardQ: ", rewardQ.publicKey.toBase58());
   console.log("member: ", member.publicKey.toBase58());
   console.log("pendingWithdrawal: ", pendingWithdrawal.publicKey.toBase58());
   console.log("unlockedVendor: ", unlockedVendor.publicKey.toBase58());
   console.log("unlockedVendorVault: ", unlockedVendorVault.publicKey.toBase58());
-  console.log("registrarAccount: ", registrarAccount);
+
+  console.log("registrar.publicKey: ", registrar.publicKey.toString(), " ", await utils.balance(registrar.publicKey));
+  if (registrarAccount) await utils.printRegistrarSigner(registrarAccount);
+
   if (registrarSigner) console.log("registrarSigner: ", registrarSigner.toBase58(), " ", await utils.balance(registrarSigner));
   else console.log("registrarSigner: ", registrarSigner);
   console.log("nonce: ", nonce);
