@@ -1,0 +1,164 @@
+➜  demo_main_flow git:(integration/devnet) ✗ node step03_client_deposit_and_stake_token_program.js
+Running client.
+----------------------------------------
+Start Setup
+main_staking_program_id:  Ger7rcLu1nscJ2cFRHk6XfZdEfGL8tdhyyQDGsXUYQdE   1141440
+owner:  FY3QHJREKMii9jgQCTa7bthUHZ1X6Gsbz8PWtcmcUXrd   26005689760
+mint:  CHu82ZMo9fSJwAM9evgM5u86UEoJM5H8XcUjZuWXQ6XV   1461600
+god:  DRuuhcSdUNoReYwcjg4iLhrRy52JWfKW4938bLcrMws3   2039280
+registrar:  4s6eYBpqXKMSk8dgBkeFNCNALTiyu28P7L1qQaqBjExN
+rewardQ:  Gq2v4EV7yMGGuKXooEmaWyM962M9B283ja4jYE4pp6Jp
+member:  5LEE7kb6yAXQjvfbaXEftSnQLTQdTp8YxSLTWs76abLJ
+registrarSigner:  DmEnsipMXe9qkUmuLtmTi3F3X9nwp6QUvheftjeozxfy   0
+nonce:  undefined
+poolMint:  3tMnnuBEzJfYZqXLwRG2DL7FZehh9PvBaBdGWia83Lcu   1461600
+----------------------------------------
+create member
+----------------------------------------
+main_staking_program_id:  Ger7rcLu1nscJ2cFRHk6XfZdEfGL8tdhyyQDGsXUYQdE   1141440
+owner:  FY3QHJREKMii9jgQCTa7bthUHZ1X6Gsbz8PWtcmcUXrd   25985828560
+mint:  CHu82ZMo9fSJwAM9evgM5u86UEoJM5H8XcUjZuWXQ6XV   1461600
+god:  DRuuhcSdUNoReYwcjg4iLhrRy52JWfKW4938bLcrMws3   2039280
+registrar:  4s6eYBpqXKMSk8dgBkeFNCNALTiyu28P7L1qQaqBjExN
+rewardQ:  Gq2v4EV7yMGGuKXooEmaWyM962M9B283ja4jYE4pp6Jp
+member:  5LEE7kb6yAXQjvfbaXEftSnQLTQdTp8YxSLTWs76abLJ
+     registrarAccount
+        registrarAccount.authority:  FY3QHJREKMii9jgQCTa7bthUHZ1X6Gsbz8PWtcmcUXrd   25985828560
+        registrarAccount.rewardEventQ:  Gq2v4EV7yMGGuKXooEmaWyM962M9B283ja4jYE4pp6Jp   58310880
+        registrarAccount.mint:  CHu82ZMo9fSJwAM9evgM5u86UEoJM5H8XcUjZuWXQ6XV   1461600
+        registrarAccount.poolMint:  3tMnnuBEzJfYZqXLwRG2DL7FZehh9PvBaBdGWia83Lcu   1461600
+registrarSigner:  DmEnsipMXe9qkUmuLtmTi3F3X9nwp6QUvheftjeozxfy   0
+nonce:  undefined
+poolMint:  3tMnnuBEzJfYZqXLwRG2DL7FZehh9PvBaBdGWia83Lcu   1461600
+   memberAccount:
+   registrar:  4s6eYBpqXKMSk8dgBkeFNCNALTiyu28P7L1qQaqBjExN   1955760
+   beneficiary:  FY3QHJREKMii9jgQCTa7bthUHZ1X6Gsbz8PWtcmcUXrd   25985828560
+   metadata:  11111111111111111111111111111111   1
+     member.balances
+        spt:  ytJtPoqRcP7bpzYAo8pnBrVgWSfmEB43eVTDuYfYRBj   2039280
+        vault:  HxYmFw1CBbVqCYFtjuTdUDi3wGfgmX2TG7PCbEPZKQLg   2039280
+        vaultStake:  9tHBo5MrvUMNJG6owqaZe7geoFuyrHU1CWQxXDr9GkVy   2039280
+        vaultPendingWithdraw:  2QhUx6VGicpSTFmKUurjnpYchihHR4WZQYfRjYR7A3U1   2039280
+     member.balancesLocked
+        spt:  GQocrNsLuhgvi1pCNqgdYq97i6Dw92JQmsbqCpwBP72o   2039280
+        vault:  4tWsohYBDYuwUVCfiGkj7JMwWACU99ADRuJAK39pTUgX   2039280
+        vaultStake:  4MEqGSREJNsnGLBGVwVKDYbUhWimomhC4iZ7HAqBWpWQ   2039280
+        vaultPendingWithdraw:  HtLjAKmnUjQkLTCaJjN1NThd3NRUi44Q3he9jwr1Jyaj   2039280
+memberSigner:  28K4A1K3sQReDLW4BTtrjuGwNMNRiw7UtkDLidFUidya
+     balances
+        spt:  ytJtPoqRcP7bpzYAo8pnBrVgWSfmEB43eVTDuYfYRBj   2039280
+        vault:  HxYmFw1CBbVqCYFtjuTdUDi3wGfgmX2TG7PCbEPZKQLg   2039280
+        vaultStake:  9tHBo5MrvUMNJG6owqaZe7geoFuyrHU1CWQxXDr9GkVy   2039280
+        vaultPendingWithdraw:  2QhUx6VGicpSTFmKUurjnpYchihHR4WZQYfRjYR7A3U1   2039280
+     balancesLocked
+        spt:  GQocrNsLuhgvi1pCNqgdYq97i6Dw92JQmsbqCpwBP72o   2039280
+        vault:  4tWsohYBDYuwUVCfiGkj7JMwWACU99ADRuJAK39pTUgX   2039280
+        vaultStake:  4MEqGSREJNsnGLBGVwVKDYbUhWimomhC4iZ7HAqBWpWQ   2039280
+        vaultPendingWithdraw:  HtLjAKmnUjQkLTCaJjN1NThd3NRUi44Q3he9jwr1Jyaj   2039280
+########
+invoke deposit Token
+invoke serum common get token account from member account balances vault
+memberVault.mint:  CHu82ZMo9fSJwAM9evgM5u86UEoJM5H8XcUjZuWXQ6XV   1461600
+memberVault.owner:  28K4A1K3sQReDLW4BTtrjuGwNMNRiw7UtkDLidFUidya   0
+########
+----------------------------------------
+main_staking_program_id:  Ger7rcLu1nscJ2cFRHk6XfZdEfGL8tdhyyQDGsXUYQdE   1141440
+owner:  FY3QHJREKMii9jgQCTa7bthUHZ1X6Gsbz8PWtcmcUXrd   25985823560
+mint:  CHu82ZMo9fSJwAM9evgM5u86UEoJM5H8XcUjZuWXQ6XV   1461600
+god:  DRuuhcSdUNoReYwcjg4iLhrRy52JWfKW4938bLcrMws3   2039280
+registrar:  4s6eYBpqXKMSk8dgBkeFNCNALTiyu28P7L1qQaqBjExN
+rewardQ:  Gq2v4EV7yMGGuKXooEmaWyM962M9B283ja4jYE4pp6Jp
+member:  5LEE7kb6yAXQjvfbaXEftSnQLTQdTp8YxSLTWs76abLJ
+     registrarAccount
+        registrarAccount.authority:  FY3QHJREKMii9jgQCTa7bthUHZ1X6Gsbz8PWtcmcUXrd   25985823560
+        registrarAccount.rewardEventQ:  Gq2v4EV7yMGGuKXooEmaWyM962M9B283ja4jYE4pp6Jp   58310880
+        registrarAccount.mint:  CHu82ZMo9fSJwAM9evgM5u86UEoJM5H8XcUjZuWXQ6XV   1461600
+        registrarAccount.poolMint:  3tMnnuBEzJfYZqXLwRG2DL7FZehh9PvBaBdGWia83Lcu   1461600
+registrarSigner:  DmEnsipMXe9qkUmuLtmTi3F3X9nwp6QUvheftjeozxfy   0
+nonce:  undefined
+poolMint:  3tMnnuBEzJfYZqXLwRG2DL7FZehh9PvBaBdGWia83Lcu   1461600
+   memberAccount:
+   registrar:  4s6eYBpqXKMSk8dgBkeFNCNALTiyu28P7L1qQaqBjExN   1955760
+   beneficiary:  FY3QHJREKMii9jgQCTa7bthUHZ1X6Gsbz8PWtcmcUXrd   25985823560
+   metadata:  11111111111111111111111111111111   1
+     member.balances
+        spt:  ytJtPoqRcP7bpzYAo8pnBrVgWSfmEB43eVTDuYfYRBj   2039280
+        vault:  HxYmFw1CBbVqCYFtjuTdUDi3wGfgmX2TG7PCbEPZKQLg   2039280
+        vaultStake:  9tHBo5MrvUMNJG6owqaZe7geoFuyrHU1CWQxXDr9GkVy   2039280
+        vaultPendingWithdraw:  2QhUx6VGicpSTFmKUurjnpYchihHR4WZQYfRjYR7A3U1   2039280
+     member.balancesLocked
+        spt:  GQocrNsLuhgvi1pCNqgdYq97i6Dw92JQmsbqCpwBP72o   2039280
+        vault:  4tWsohYBDYuwUVCfiGkj7JMwWACU99ADRuJAK39pTUgX   2039280
+        vaultStake:  4MEqGSREJNsnGLBGVwVKDYbUhWimomhC4iZ7HAqBWpWQ   2039280
+        vaultPendingWithdraw:  HtLjAKmnUjQkLTCaJjN1NThd3NRUi44Q3he9jwr1Jyaj   2039280
+memberSigner:  28K4A1K3sQReDLW4BTtrjuGwNMNRiw7UtkDLidFUidya
+     balances
+        spt:  ytJtPoqRcP7bpzYAo8pnBrVgWSfmEB43eVTDuYfYRBj   2039280
+        vault:  HxYmFw1CBbVqCYFtjuTdUDi3wGfgmX2TG7PCbEPZKQLg   2039280
+        vaultStake:  9tHBo5MrvUMNJG6owqaZe7geoFuyrHU1CWQxXDr9GkVy   2039280
+        vaultPendingWithdraw:  2QhUx6VGicpSTFmKUurjnpYchihHR4WZQYfRjYR7A3U1   2039280
+     balancesLocked
+        spt:  GQocrNsLuhgvi1pCNqgdYq97i6Dw92JQmsbqCpwBP72o   2039280
+        vault:  4tWsohYBDYuwUVCfiGkj7JMwWACU99ADRuJAK39pTUgX   2039280
+        vaultStake:  4MEqGSREJNsnGLBGVwVKDYbUhWimomhC4iZ7HAqBWpWQ   2039280
+        vaultPendingWithdraw:  HtLjAKmnUjQkLTCaJjN1NThd3NRUi44Q3he9jwr1Jyaj   2039280
+****************
+invoke stake for unlocked member
+  vault
+   mint:  CHu82ZMo9fSJwAM9evgM5u86UEoJM5H8XcUjZuWXQ6XV   1461600
+   owner:  28K4A1K3sQReDLW4BTtrjuGwNMNRiw7UtkDLidFUidya   0
+   amount:  4444
+   delegated amount:  0
+  vaultStake
+   mint:  CHu82ZMo9fSJwAM9evgM5u86UEoJM5H8XcUjZuWXQ6XV   1461600
+   owner:  28K4A1K3sQReDLW4BTtrjuGwNMNRiw7UtkDLidFUidya   0
+   amount:  4444
+   delegated amount:  0
+  spt
+   mint:  3tMnnuBEzJfYZqXLwRG2DL7FZehh9PvBaBdGWia83Lcu   1461600
+   owner:  28K4A1K3sQReDLW4BTtrjuGwNMNRiw7UtkDLidFUidya   0
+   amount:  2222
+   delegated amount:  0
+----------------------------------------
+main_staking_program_id:  Ger7rcLu1nscJ2cFRHk6XfZdEfGL8tdhyyQDGsXUYQdE   1141440
+owner:  FY3QHJREKMii9jgQCTa7bthUHZ1X6Gsbz8PWtcmcUXrd   25985818560
+mint:  CHu82ZMo9fSJwAM9evgM5u86UEoJM5H8XcUjZuWXQ6XV   1461600
+god:  DRuuhcSdUNoReYwcjg4iLhrRy52JWfKW4938bLcrMws3   2039280
+registrar:  4s6eYBpqXKMSk8dgBkeFNCNALTiyu28P7L1qQaqBjExN
+rewardQ:  Gq2v4EV7yMGGuKXooEmaWyM962M9B283ja4jYE4pp6Jp
+member:  5LEE7kb6yAXQjvfbaXEftSnQLTQdTp8YxSLTWs76abLJ
+     registrarAccount
+        registrarAccount.authority:  FY3QHJREKMii9jgQCTa7bthUHZ1X6Gsbz8PWtcmcUXrd   25985818560
+        registrarAccount.rewardEventQ:  Gq2v4EV7yMGGuKXooEmaWyM962M9B283ja4jYE4pp6Jp   58310880
+        registrarAccount.mint:  CHu82ZMo9fSJwAM9evgM5u86UEoJM5H8XcUjZuWXQ6XV   1461600
+        registrarAccount.poolMint:  3tMnnuBEzJfYZqXLwRG2DL7FZehh9PvBaBdGWia83Lcu   1461600
+registrarSigner:  DmEnsipMXe9qkUmuLtmTi3F3X9nwp6QUvheftjeozxfy   0
+nonce:  undefined
+poolMint:  3tMnnuBEzJfYZqXLwRG2DL7FZehh9PvBaBdGWia83Lcu   1461600
+   memberAccount:
+   registrar:  4s6eYBpqXKMSk8dgBkeFNCNALTiyu28P7L1qQaqBjExN   1955760
+   beneficiary:  FY3QHJREKMii9jgQCTa7bthUHZ1X6Gsbz8PWtcmcUXrd   25985818560
+   metadata:  11111111111111111111111111111111   1
+     member.balances
+        spt:  ytJtPoqRcP7bpzYAo8pnBrVgWSfmEB43eVTDuYfYRBj   2039280
+        vault:  HxYmFw1CBbVqCYFtjuTdUDi3wGfgmX2TG7PCbEPZKQLg   2039280
+        vaultStake:  9tHBo5MrvUMNJG6owqaZe7geoFuyrHU1CWQxXDr9GkVy   2039280
+        vaultPendingWithdraw:  2QhUx6VGicpSTFmKUurjnpYchihHR4WZQYfRjYR7A3U1   2039280
+     member.balancesLocked
+        spt:  GQocrNsLuhgvi1pCNqgdYq97i6Dw92JQmsbqCpwBP72o   2039280
+        vault:  4tWsohYBDYuwUVCfiGkj7JMwWACU99ADRuJAK39pTUgX   2039280
+        vaultStake:  4MEqGSREJNsnGLBGVwVKDYbUhWimomhC4iZ7HAqBWpWQ   2039280
+        vaultPendingWithdraw:  HtLjAKmnUjQkLTCaJjN1NThd3NRUi44Q3he9jwr1Jyaj   2039280
+memberSigner:  28K4A1K3sQReDLW4BTtrjuGwNMNRiw7UtkDLidFUidya
+     balances
+        spt:  ytJtPoqRcP7bpzYAo8pnBrVgWSfmEB43eVTDuYfYRBj   2039280
+        vault:  HxYmFw1CBbVqCYFtjuTdUDi3wGfgmX2TG7PCbEPZKQLg   2039280
+        vaultStake:  9tHBo5MrvUMNJG6owqaZe7geoFuyrHU1CWQxXDr9GkVy   2039280
+        vaultPendingWithdraw:  2QhUx6VGicpSTFmKUurjnpYchihHR4WZQYfRjYR7A3U1   2039280
+     balancesLocked
+        spt:  GQocrNsLuhgvi1pCNqgdYq97i6Dw92JQmsbqCpwBP72o   2039280
+        vault:  4tWsohYBDYuwUVCfiGkj7JMwWACU99ADRuJAK39pTUgX   2039280
+        vaultStake:  4MEqGSREJNsnGLBGVwVKDYbUhWimomhC4iZ7HAqBWpWQ   2039280
+        vaultPendingWithdraw:  HtLjAKmnUjQkLTCaJjN1NThd3NRUi44Q3he9jwr1Jyaj   2039280
+Success
+➜  demo_main_flow git:(integration/devnet) ✗

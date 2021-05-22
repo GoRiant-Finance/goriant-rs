@@ -1,0 +1,89 @@
+➜  demo_main_flow git:(integration/devnet) ✗ node step02_init_staking_program.js
+Running client.
+----------------------------------------
+Start Setup
+#########################
+Start Log State
+
+main_staking_program_id:  Ger7rcLu1nscJ2cFRHk6XfZdEfGL8tdhyyQDGsXUYQdE   1141440
+owner:  FY3QHJREKMii9jgQCTa7bthUHZ1X6Gsbz8PWtcmcUXrd   26067443000
+mint:  CHu82ZMo9fSJwAM9evgM5u86UEoJM5H8XcUjZuWXQ6XV   1461600
+god:  DRuuhcSdUNoReYwcjg4iLhrRy52JWfKW4938bLcrMws3   2039280
+registrar:  4s6eYBpqXKMSk8dgBkeFNCNALTiyu28P7L1qQaqBjExN
+rewardQ:  Gq2v4EV7yMGGuKXooEmaWyM962M9B283ja4jYE4pp6Jp
+member:  9AVeLngbif8VGvRUgEnE1ibRJk1A7CCnjzAGiip9Gm7i
+pendingWithdrawal:  8jJTT7SiayGHU7t7tLth8JWsvYA2cnUWhA7TLR2WDVfd
+unlockedVendor:  8f4yiqGoi13Ubm1Z4P9FLwL1sEmqL8muv9caSVEFNRWd
+unlockedVendorVault:  BAzXeU1H5xC3Aav1nHSpj9HcJVnEAqZ9nK9d9uoXsXj7
+registrar.publicKey:  4s6eYBpqXKMSk8dgBkeFNCNALTiyu28P7L1qQaqBjExN   0
+registrarSigner:  null
+nonce:  null
+poolMint:  null
+memberAccount:  null
+memberSigner:  null
+unlockedVendorSigner:  null
+
+End Log State
+#########################
+----------------------------------------
+create_registry_genesis
+ poolMint:  3tMnnuBEzJfYZqXLwRG2DL7FZehh9PvBaBdGWia83Lcu   1461600
+ registrarSigner:  DmEnsipMXe9qkUmuLtmTi3F3X9nwp6QUvheftjeozxfy   0
+ nonce:  255
+----------------------------------------
+#########################
+Start Log State
+
+main_staking_program_id:  Ger7rcLu1nscJ2cFRHk6XfZdEfGL8tdhyyQDGsXUYQdE   1141440
+owner:  FY3QHJREKMii9jgQCTa7bthUHZ1X6Gsbz8PWtcmcUXrd   26065971400
+mint:  CHu82ZMo9fSJwAM9evgM5u86UEoJM5H8XcUjZuWXQ6XV   1461600
+god:  DRuuhcSdUNoReYwcjg4iLhrRy52JWfKW4938bLcrMws3   2039280
+registrar:  4s6eYBpqXKMSk8dgBkeFNCNALTiyu28P7L1qQaqBjExN
+rewardQ:  Gq2v4EV7yMGGuKXooEmaWyM962M9B283ja4jYE4pp6Jp
+member:  9AVeLngbif8VGvRUgEnE1ibRJk1A7CCnjzAGiip9Gm7i
+pendingWithdrawal:  8jJTT7SiayGHU7t7tLth8JWsvYA2cnUWhA7TLR2WDVfd
+unlockedVendor:  8f4yiqGoi13Ubm1Z4P9FLwL1sEmqL8muv9caSVEFNRWd
+unlockedVendorVault:  BAzXeU1H5xC3Aav1nHSpj9HcJVnEAqZ9nK9d9uoXsXj7
+registrar.publicKey:  4s6eYBpqXKMSk8dgBkeFNCNALTiyu28P7L1qQaqBjExN   0
+registrarSigner:  DmEnsipMXe9qkUmuLtmTi3F3X9nwp6QUvheftjeozxfy   0
+nonce:  255
+poolMint:  3tMnnuBEzJfYZqXLwRG2DL7FZehh9PvBaBdGWia83Lcu   1461600
+memberAccount:  null
+memberSigner:  null
+unlockedVendorSigner:  null
+
+End Log State
+#########################
+----------------------------------------
+initialize_registrar
+----------------------------------------
+#########################
+Start Log State
+
+main_staking_program_id:  Ger7rcLu1nscJ2cFRHk6XfZdEfGL8tdhyyQDGsXUYQdE   1141440
+owner:  FY3QHJREKMii9jgQCTa7bthUHZ1X6Gsbz8PWtcmcUXrd   26005689760
+mint:  CHu82ZMo9fSJwAM9evgM5u86UEoJM5H8XcUjZuWXQ6XV   1461600
+god:  DRuuhcSdUNoReYwcjg4iLhrRy52JWfKW4938bLcrMws3   2039280
+registrar:  4s6eYBpqXKMSk8dgBkeFNCNALTiyu28P7L1qQaqBjExN
+rewardQ:  Gq2v4EV7yMGGuKXooEmaWyM962M9B283ja4jYE4pp6Jp
+member:  9AVeLngbif8VGvRUgEnE1ibRJk1A7CCnjzAGiip9Gm7i
+pendingWithdrawal:  8jJTT7SiayGHU7t7tLth8JWsvYA2cnUWhA7TLR2WDVfd
+unlockedVendor:  8f4yiqGoi13Ubm1Z4P9FLwL1sEmqL8muv9caSVEFNRWd
+unlockedVendorVault:  BAzXeU1H5xC3Aav1nHSpj9HcJVnEAqZ9nK9d9uoXsXj7
+registrar.publicKey:  4s6eYBpqXKMSk8dgBkeFNCNALTiyu28P7L1qQaqBjExN   1955760
+registrarAccount.authority:  FY3QHJREKMii9jgQCTa7bthUHZ1X6Gsbz8PWtcmcUXrd   26005689760
+registrarAccount.rewardEventQ:  Gq2v4EV7yMGGuKXooEmaWyM962M9B283ja4jYE4pp6Jp   58310880
+registrarAccount.mint:  CHu82ZMo9fSJwAM9evgM5u86UEoJM5H8XcUjZuWXQ6XV   1461600
+registrarAccount.stakeRate:  2 %
+registrarAccount.withdrawalTimelock:  4
+registrarSigner:  DmEnsipMXe9qkUmuLtmTi3F3X9nwp6QUvheftjeozxfy   0
+nonce:  255
+poolMint:  3tMnnuBEzJfYZqXLwRG2DL7FZehh9PvBaBdGWia83Lcu   1461600
+memberAccount:  null
+memberSigner:  null
+unlockedVendorSigner:  null
+
+End Log State
+#########################
+----------------------------------------
+Success
