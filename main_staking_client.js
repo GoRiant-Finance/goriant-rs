@@ -1,7 +1,7 @@
 const anchor = require("@project-serum/anchor");
 const serumCmn = require("@project-serum/common");
 const TokenInstructions = require("@project-serum/serum").TokenInstructions;
-const utils = require("./utils");
+const utils = require("./demo_main_flow/utils");
 const fs = require('fs');
 const config = JSON.parse(fs.readFileSync('config.json', 'utf8'));
 //----------------
@@ -43,37 +43,36 @@ let balancesLocked = null;
 let unlockedVendorSigner = null;
 
 async function log_state() {
-  console.log("main_staking_program_id: ", main_staking_program_id.toBase58() , " " , await balance(main_staking_program_id));
-  if (owner) console.log("owner: ", owner.toBase58(), " " , await balance(owner));
+  console.log("main_staking_program_id: ", main_staking_program_id.toBase58(), " ", await balance(main_staking_program_id));
+  if (owner) console.log("owner: ", owner.toBase58(), " ", await balance(owner));
   else console.log("owner: ", owner);
-  if (mint) console.log("mint: ", mint.toBase58(), " " , await balance(mint));
+  if (mint) console.log("mint: ", mint.toBase58(), " ", await balance(mint));
   else console.log("mint: ", mint);
-  if (god) console.log("god: " , god.toBase58(), " " , await balance(god));
+  if (god) console.log("god: ", god.toBase58(), " ", await balance(god));
   else console.log("god: ", god);
-  console.log("registrar: " , registrar.publicKey.toBase58());
-  console.log("rewardQ: " , rewardQ.publicKey.toBase58());
-  console.log("member: " , member.publicKey.toBase58());
-  console.log("pendingWithdrawal: " , pendingWithdrawal.publicKey.toBase58());
-  console.log("unlockedVendor: " , unlockedVendor.publicKey.toBase58());
-  console.log("unlockedVendorVault: " , unlockedVendorVault.publicKey.toBase58());
+  console.log("registrar: ", registrar.publicKey.toBase58());
+  console.log("rewardQ: ", rewardQ.publicKey.toBase58());
+  console.log("member: ", member.publicKey.toBase58());
+  console.log("pendingWithdrawal: ", pendingWithdrawal.publicKey.toBase58());
+  console.log("unlockedVendor: ", unlockedVendor.publicKey.toBase58());
+  console.log("unlockedVendorVault: ", unlockedVendorVault.publicKey.toBase58());
   console.log("registrarAccount: ", registrarAccount);
-  if (registrarSigner) console.log("registrarSigner: " , registrarSigner.toBase58() , " " , await balance(registrarSigner));
+  if (registrarSigner) console.log("registrarSigner: ", registrarSigner.toBase58(), " ", await balance(registrarSigner));
   else console.log("registrarSigner: ", registrarSigner);
-  console.log("nonce: " , nonce);
-  if (poolMint) console.log("poolMint: " , poolMint.toBase58() , " " , await balance(poolMint));
+  console.log("nonce: ", nonce);
+  if (poolMint) console.log("poolMint: ", poolMint.toBase58(), " ", await balance(poolMint));
   else console.log("poolMint: ", poolMint);
   console.log("memberAccount: ", memberAccount);
-  console.log("memberSigner: " , memberSigner);
+  console.log("memberSigner: ", memberSigner);
   if (balances) await printBalance("balances", balances);
   if (balancesLocked) await printBalance("balancesLocked", balancesLocked);
-  console.log("unlockedVendorSigner: " , unlockedVendorSigner);
+  console.log("unlockedVendorSigner: ", unlockedVendorSigner);
 
   // console.log("registrarAccount.authority: ", registrarAccount.authority.toString(), " ", await balance(registrarAccount.authority));
   // console.log("registrarAccount.rewardEventQ: ", registrarAccount.rewardEventQ.toString(), " ", await balance(registrarAccount.rewardEventQ));
   // console.log("registrarAccount.mint: ", registrarAccount.mint.toString(), " ", await balance(registrarAccount.mint));
   // console.log("registrarAccount.stakeRate: ", registrarAccount.stakeRate.toString(), "%");
   // console.log("registrarAccount.withdrawalTimelock: ", registrarAccount.withdrawalTimelock.toString());
-
 
 
 }
