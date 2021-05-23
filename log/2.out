@@ -1,0 +1,25 @@
+member:  2N2ZsVxJrjKP6J8HkLQ9xv2ry45aYYHWev5XkEj92ehG
+create balance sandbox tx:  3LbCg3sy6PgYeN9vaaLu3iQD44ebR8TMDTWbdpAmZuZjyGAmdwJSvEvUUErZQSZzyYTUQDkNCbQ38C29CXo3FX4F
+balances.spt:  aA71hgxpqQoMpQTdBj777g59mDZrSG217LJLhuhP9Zu
+balances.vaultStake:  HADQzQGKzp2hptVaeZP8UK54AUjy5LhSCZCzLEhHXRH6
+balances.vaultPw:  9jgsx3mY9sSTfXkbxKyqgTXMY8nfAVJktQMtX6VhEfcG
+tx:  4U8pEdjir4zHounnMTkNdZVPpfL8ibyH44SWFLKeYKrHTAfuBSAVH6k9cuZYVLBSMxru6pVp8JJXJ1k9G151CsZ7
+memberAccount.owner:  AjTDLc7fuRhaerkDuoA8Z1BDBtS9gs72CuGgQ7a4t3GJ
+memberAccount.metadata:  11111111111111111111111111111111
+memberAccount.rewardsCursor:  0
+memberAccount.lastStakeTs:  0
+memberAccount.nonce:  254
+memberAccount.balances
+spt:  aA71hgxpqQoMpQTdBj777g59mDZrSG217LJLhuhP9Zu  - amount:  0
+vaultStake:  HADQzQGKzp2hptVaeZP8UK54AUjy5LhSCZCzLEhHXRH6  - amount:  0
+vaultPw:  9jgsx3mY9sSTfXkbxKyqgTXMY8nfAVJktQMtX6VhEfcG  - amount:  0
+tx id:  4U8pEdjir4zHounnMTkNdZVPpfL8ibyH44SWFLKeYKrHTAfuBSAVH6k9cuZYVLBSMxru6pVp8JJXJ1k9G151CsZ7
+state.key:  5PyHXnyrUr13TLkRvVntaoifaBZSW7cY1YxpCnoHHiHL
+state.authority:  AjTDLc7fuRhaerkDuoA8Z1BDBtS9gs72CuGgQ7a4t3GJ
+state.imprint:  4ZpK3EJ3GH4NZ1Hx4qjmUVBinnySN9hNTPncnJ86BowD
+state.nonce:  255
+state.withdrawTimeLock:  10
+state.rewardEventQ:  3jfCvmm1LYt5uedHeTaukMwmFPD1uG1V2SY2qRL9Yj8L
+state.mint:  EGcEzxB65A6MLh2fA9jVPKwPivrJdHKEvRjfQ2G2LpnS
+state.poolMint:  EL8pzTbFmhZvh4ZsfHka2FpXJRyBNaoGoMqrQ9vZNY68
+state.stakeRate:  10

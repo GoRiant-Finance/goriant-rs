@@ -2,13 +2,12 @@ const anchor = require("@project-serum/anchor");
 const serumCmn = require("@project-serum/common");
 const fs = require('fs');
 
-const provider = anchor.Provider.local('https://api.devnet.solana.com');
-
+// const provider = anchor.Provider.local('https://api.devnet.solana.com');
+const provider = anchor.Provider.local();
 async function createBalanceSandbox(provider, r, registrySigner) {
   const spt = new anchor.web3.Account();
-  const vault = new anchor.web3.Account();
   const vaultStake = new anchor.web3.Account();
-  const vaultPendingWithdraw = new anchor.web3.Account();
+  const vaultPw = new anchor.web3.Account();
 
   const lamports = await provider.connection.getMinimumBalanceForRentExemption(
     165
@@ -21,13 +20,6 @@ async function createBalanceSandbox(provider, r, registrySigner) {
     registrySigner,
     lamports
   );
-  const createVaultIx = await serumCmn.createTokenAccountInstrs(
-    provider,
-    vault.publicKey,
-    r.mint,
-    registrySigner,
-    lamports
-  );
   const createVaultStakeIx = await serumCmn.createTokenAccountInstrs(
     provider,
     vaultStake.publicKey,
@@ -37,7 +29,7 @@ async function createBalanceSandbox(provider, r, registrySigner) {
   );
   const createVaultPwIx = await serumCmn.createTokenAccountInstrs(
     provider,
-    vaultPendingWithdraw.publicKey,
+      vaultPw.publicKey,
     r.mint,
     registrySigner,
     lamports
@@ -45,11 +37,10 @@ async function createBalanceSandbox(provider, r, registrySigner) {
   let tx0 = new anchor.web3.Transaction();
   tx0.add(
     ...createSptIx,
-    ...createVaultIx,
     ...createVaultStakeIx,
     ...createVaultPwIx
   );
-  let signers0 = [spt, vault, vaultStake, vaultPendingWithdraw];
+  let signers0 = [spt, vaultStake, vaultPw];
 
   const tx = {tx: tx0, signers: signers0};
 
@@ -57,9 +48,8 @@ async function createBalanceSandbox(provider, r, registrySigner) {
     tx,
     {
       spt: spt.publicKey,
-      vault: vault.publicKey,
       vaultStake: vaultStake.publicKey,
-      vaultPendingWithdraw: vaultPendingWithdraw.publicKey,
+      vaultPw: vaultPw.publicKey,
     },
   ];
 }
@@ -130,17 +120,17 @@ async function sleep(ms) {
 }
 
 async function tokenBalance(address) {
-  return await provider.connection
-    .getTokenAccountBalance(await new anchor.web3.PublicKey(address));
+  return (await provider.connection
+    .getTokenAccountBalance(await new anchor.web3.PublicKey(address))).value;
 }
 
-async function writeConfig(c) {
+function writeConfig(c) {
   let data = JSON.stringify(c);
-  fs.writeFileSync('../config.json', data);
+  fs.writeFileSync('./config.json', data);
 }
 
-async function readConfig() {
-  return JSON.parse(fs.readFileSync('../config.json', 'utf8'));
+function readConfig() {
+  return JSON.parse(fs.readFileSync('./config.json', 'utf8'));
 }
 
 module.exports = {

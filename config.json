@@ -1,17 +1,1 @@
-{
-  "programId": "Ger7rcLu1nscJ2cFRHk6XfZdEfGL8tdhyyQDGsXUYQdE",
-  "owner": "FY3QHJREKMii9jgQCTa7bthUHZ1X6Gsbz8PWtcmcUXrd",
-  "token": "7NqcJ3T1kN9BWJXoJ7d1tuefDzMNeEXenuTdS5LYG8iw",
-  "vault": "Dkj8h9yhLUWTxyX4Uwy352jy2poe3qohFi2xzFrXEQCr",
-  "poolMint": "9hVBPWAw5hvKVCMFN31dhK6K59UirMMx6DMaSVnAkH3q",
-  "registrarSigner": "BSmL88zoxZJeyc2Na9rTzg5FrGm4mrEp5JTKAqv92Vr",
-  "registrar": "3dbCZdxnkFa9h369KvDWkYT1JaJAjG4VvLm5c9HCgZQD",
-  "registrar_authority": "FY3QHJREKMii9jgQCTa7bthUHZ1X6Gsbz8PWtcmcUXrd",
-  "registrar_rewardEventQ": "4iP2hXbdt6eLgcf81vrTzA7SNJsGDP64CGLQfJf1D9ki",
-  "registrar_mint": "7NqcJ3T1kN9BWJXoJ7d1tuefDzMNeEXenuTdS5LYG8iw",
-  "member": "Boj8uMW81UDGJydcXLzyVh9cqjrG7z3wBs8APnMZhmbz",
-  "memberSigner": "2L8Axu4wqoa91VGoM5w5snSQuCNWKBbuLhnVSLqrSr7g",
-  "unlockedVendor": "66cSPw9qmf1dKABj9Sb3QBakA7SowmUT2GPbxseYesRy",
-  "unlockedVendorVault": "FQfunfztPsQz1UXDmFpmUJRi4xzxsVNp7fCj2xotnMdr",
-  "unlockedVendorSigner": "DvRhWFp8sE1wQfXDfmgfj7pQJUT1y8BRseKDvgGnAp71"
-}
+{"programId":"44KgYmcei1H5BVuF6AkvN4gW1fgKNJpDmDiWkCDfrs6C","token":"EKGBPSk1tKvhHTAwfHcGfYFs3X3A1KdLvFZtqSbVW4Uj","vault":"BWWxPLbz7ZoPubFZdVZC6oSuoqNXpmFzUhUCr4bMHPFD"}
