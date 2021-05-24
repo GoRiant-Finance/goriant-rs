@@ -68,13 +68,14 @@ mod staking {
             vendor.vault = *ctx.accounts.vendor_vault.to_account_info().key;
             vendor.mint = ctx.accounts.vendor_vault.mint;
             vendor.nonce = vendor_nonce;
-            // vendor.pool_token_supply = ctx.accounts.pool_mint.supply;
-            // vendor.position_in_reward_queue = reward_position;
+            vendor.pool_token_supply = vec![0];
+            vendor.total = Vec::new();
+            vendor.current_reward_position = 0;
             // vendor.start_ts = ctx.accounts.clock.unix_timestamp;
             // vendor.expiry_ts = expiry_ts;
             // vendor.expiry_receiver = expiry_receiver;
             // vendor.from = *ctx.accounts.depositor_authority.key;
-            // vendor.total = amount;
+
 
 
             let staking_pool = Self {
@@ -104,6 +105,7 @@ mod staking {
         member.authority = *ctx.accounts.authority.key;
         member.balances = (&ctx.accounts.balances).into();
         member.nonce = member_nonce;
+        member.rewards_cursor = -1;
 
         Ok(())
     }
@@ -111,6 +113,12 @@ mod staking {
     #[access_control(StakeRequest::validate(& ctx))]
     pub fn deposit_and_state(ctx: Context<StakeRequest>, amount: u64) -> Result<(), ProgramError>
     {
+        let vendor = &mut ctx.accounts.vendor;
+        let total_supply = vendor.pool_token_supply.get_mut(vendor.current_reward_position).unwrap();
+        if total_supply.checked_add(amount).is_none() {
+            return Err(ErrorCode::CalculateError.into());
+        }
+
         // Deposit from depositor account to stake vault
         {
             msg!("Transfer token from depositor to stake vault");
@@ -164,11 +172,14 @@ mod staking {
             };
         }
 
+        msg!("Update total stake token");
+        vendor.pool_token_supply.checked_add(amount).unwrap();
+
         msg!("Update last stake time");
         // Update stake timestamp.
         let member = &mut ctx.accounts.member;
         member.last_stake_ts = ctx.accounts.clock.unix_timestamp;
-
+        member.rewards_cursor = vendor.current_reward_position;
         Ok(())
     }
 
@@ -191,21 +202,62 @@ mod staking {
             };
         }
 
-        // {
-        //     // Add the event to the reward queue.
-        //     let reward_queue = &mut ctx.accounts.reward_event_queue;
-        //     let reward_position = reward_queue.append(RewardEvent {
-        //         vendor: *ctx.accounts.vendor.to_account_info().key,
-        //         ts: ctx.accounts.clock.unix_timestamp
-        //     })?;
-        //
-        // }
+        let vendor = &mut ctx.accounts.vendor;
+        let previous_supply  = vendor.pool_token_supply.get(vendor.current_reward_position).unwrap();
+
+        vendor.pool_token_supply.push(previous_supply.into());
+        vendor.total.push(amount);
+        vendor.current_reward_position += 1;
+        vendor.activated = true;
+
+        // Add the event to the reward queue.
+        let reward_queue = &mut ctx.accounts.reward_event_queue;
+        let cursor = reward_queue.append(RewardEvent {
+            vendor: *ctx.accounts.vendor.to_account_info().key,
+            ts: ctx.accounts.clock.unix_timestamp,
+        })?;
 
         Ok(())
     }
 
-    pub fn claim_reward(_ctx: Context<ClaimRewardRequest>) -> Result<(), ProgramError>
+    pub fn claim_reward(ctx: Context<ClaimRewardRequest>) -> Result<(), ProgramError>
     {
+
+        let current_position_in_q = ctx.accounts.member.rewards_cursor;
+        let spt_total = ctx.accounts.balances.vault_stake.amount;
+        let reward_amount = spt_total
+            .checked_div(ctx.accounts.vendor.pool_token_supply)
+            .unwrap()
+            .checked_mul(ctx.accounts.vendor.total)
+            .unwrap();
+        assert!(reward_amount > 0);
+
+        // Send reward to the given token account.
+        {
+            let seeds = &[
+                ctx.accounts.staking_pool.to_account_info().key.as_ref(),
+                ctx.accounts.vendor.to_account_info().key.as_ref(),
+                &[ctx.accounts.vendor.nonce],
+            ];
+            let vendor_imprint = &[&seeds[..]];
+            let cpi_ctx = CpiContext::new_with_signer(
+                ctx.accounts.token_program.clone(),
+                token::Transfer {
+                    from: ctx.accounts.vendor_vault.to_account_info(),
+                    to: ctx.accounts.to.to_account_info(),
+                    authority: ctx.accounts.vendor_signer.to_account_info(),
+                },
+                vendor_imprint,
+            );
+            if let Ok(()) = token::transfer(cpi_ctx, reward_amount) {} else {
+                return Err(ErrorCode::TransferTokenFail.into());
+            };
+        }
+
+        // Update member as having processed the reward.
+        let member = &mut ctx.accounts.member;
+        member.rewards_cursor = ctx.accounts.vendor.current_reward_position + 1;
+
         Ok(())
     }
 
@@ -359,6 +411,9 @@ pub struct StakeRequest<'info> {
     #[account(seeds = [staking_pool.key.as_ref(), & [staking_pool.nonce]])]
     imprint: AccountInfo<'info>,
 
+    #[account(mut)]
+    vendor: ProgramAccount<'info, RewardVendor>,
+
     /// Member relate account
     #[account(has_one = authority)]
     member: ProgramAccount<'info, Member>,
@@ -456,7 +511,54 @@ impl<'info> DropRewardRequest<'info> {
 }
 
 #[derive(Accounts)]
-pub struct ClaimRewardRequest {}
+pub struct ClaimRewardRequest<'info> {
+    // Stake instance.
+    staking_pool: ProgramState<'info, StakingPool>,
+
+    // Member.
+    /// Member relate account
+    #[account(mut, has_one = authority)]
+    member: ProgramAccount<'info, Member>,
+    #[account(mut, signer)]
+    authority: AccountInfo<'info>,
+    #[account(
+    "&balances.spt.owner == member_imprint.key",
+    "balances.spt.mint == staking_pool.pool_mint",
+    "balances.vault_stake.mint == staking_pool.mint",
+    "balances.vault_pw.mint == staking_pool.mint"
+    )]
+    balances: BalanceSandboxAccounts<'info>,
+    #[account(seeds = [
+    staking_pool.to_account_info().key.as_ref(),
+    member.to_account_info().key.as_ref(),
+    & [member.nonce]
+    ]
+    )]
+    member_imprint: AccountInfo<'info>,
+
+    // Vendor.
+    #[account(mut)]
+    vendor: ProgramAccount<'info, RewardVendor>,
+    #[account(mut)]
+    vendor_vault: CpiAccount<'info, TokenAccount>,
+    #[account(
+    seeds = [
+    staking_pool.to_account_info().key.as_ref(),
+    vendor.to_account_info().key.as_ref(),
+    &[vendor.nonce],
+    ]
+    )]
+    vendor_signer: AccountInfo<'info>,
+
+    // Account to send reward to.
+    #[account(mut)]
+    to: AccountInfo<'info>,
+
+    // Misc.
+    #[account("token_program.key == &token::ID")]
+    token_program: AccountInfo<'info>,
+    clock: Sysvar<'info, Clock>,
+}
 
 #[derive(Accounts)]
 pub struct WithDrawRequest<'info> {
@@ -502,13 +604,13 @@ pub struct RewardVendor {
     pub vault: Pubkey,
     pub mint: Pubkey,
     pub nonce: u8,
-    pub pool_token_supply: u64,
-    pub position_in_reward_queue: u32,
+    pub pool_token_supply: Vec<u64>,
+    pub current_reward_position: i32,
     pub start_ts: i64,
     pub expiry_ts: i64,
     pub expiry_receiver: Pubkey,
     pub from: Pubkey,
-    pub total: u64,
+    pub total: Vec<u64>,
     pub expired: bool,
     pub activated: bool,
 }
@@ -522,7 +624,7 @@ pub struct Member {
     /// Sets of balances owned by the Member.
     pub balances: BalanceSandbox,
     /// Next position in the rewards event queue to process.
-    pub rewards_cursor: u32,
+    pub rewards_cursor: i32,
     /// The clock timestamp of the last time this account staked or switched
     /// entities. Used as a proof to reward vendors that the Member account
     /// was staked at a given point in time.
@@ -545,14 +647,6 @@ pub struct BalanceSandbox {
     pub vault_stake: Pubkey,
     // Pending withdrawal vaults.
     pub vault_pw: Pubkey,
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Default, Debug, Clone, PartialEq)]
-pub struct RewardPolicy {
-    start_drop_ts: i64,
-    end_drop_ts: i64,
-    interval: i64,
-    is_allow_claim_mid_stake: bool,
 }
 
 /// When creating a member, the mints and owners of these accounts are correct.
