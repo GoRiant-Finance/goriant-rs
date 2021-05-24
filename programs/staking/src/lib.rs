@@ -35,17 +35,21 @@ mod staking {
         pub mint: Pubkey,
         /// Staking pool token mint.
         pub pool_mint: Pubkey,
+        /// Vendor of pool
+        pub vendor: Pubkey,
         /// The amount of tokens (not decimal) that must be staked to get a single
         /// staking pool token.
         pub stake_rate: u64
     }
     impl StakingPool {
-        #[access_control(InitializeStakingPoolRequest::validate(&ctx, state_pub_key, staking_pool_nonce))]
+        #[access_control(InitializeStakingPoolRequest::validate(&ctx, state_pub_key, staking_pool_nonce, vendor_nonce, mint))]
         pub fn new(
             ctx: Context<InitializeStakingPoolRequest>,
             mint: Pubkey,
             state_pub_key: Pubkey,
+            vendor_pub_key: Pubkey,
             staking_pool_nonce: u8,
+            vendor_nonce: u8,
             stake_rate: u64,
             withdraw_time_lock: i64,
         ) -> Result<Self, ProgramError>
@@ -58,6 +62,20 @@ mod staking {
                 ctx.program_id,
             ).map_err(|_| ErrorCode::InvalidNonce)?;
 
+            let vendor = &mut ctx.accounts.vendor;
+            vendor.activated = false;
+            vendor.vault = *ctx.accounts.vendor_vault.to_account_info().key;
+            vendor.mint = ctx.accounts.vendor_vault.mint;
+            vendor.nonce = vendor_nonce;
+            // vendor.pool_token_supply = ctx.accounts.pool_mint.supply;
+            // vendor.position_in_reward_queue = reward_position;
+            // vendor.start_ts = ctx.accounts.clock.unix_timestamp;
+            // vendor.expiry_ts = expiry_ts;
+            // vendor.expiry_receiver = expiry_receiver;
+            // vendor.from = *ctx.accounts.depositor_authority.key;
+            // vendor.total = amount;
+
+
             let staking_pool = Self {
                 key: state_pub_key,
                 authority: *ctx.accounts.authority.key,
@@ -67,6 +85,7 @@ mod staking {
                 reward_event_q: *ctx.accounts.reward_event_q.to_account_info().key,
                 mint,
                 pool_mint: *ctx.accounts.pool_mint.to_account_info().key,
+                vendor: vendor_pub_key,
                 stake_rate
             };
 
@@ -153,6 +172,39 @@ mod staking {
 
         Ok(())
     }
+
+    #[access_control(DropRewardRequest::validate(&ctx))]
+    pub fn drop_reward(ctx: Context<DropRewardRequest>, amount: u64) -> Result<(), ProgramError>
+    {
+        // Transfer funds into the vendor's vault.
+        {
+            msg!("Transfer token from depositor to stake vault");
+            let cpi_ctx = CpiContext::new(
+                ctx.accounts.token_program.clone(),
+                Transfer {
+                    from: ctx.accounts.depositor.clone(),
+                    to: ctx.accounts.vendor_vault.to_account_info(),
+                    authority: ctx.accounts.depositor_authority.clone(),
+                }
+            );
+            if let Ok(()) = token::transfer(cpi_ctx, amount) {}
+            else{
+                return Err(ErrorCode::TransferDepositFail.into())
+            };
+        }
+
+        // {
+        //     // Add the event to the reward queue.
+        //     let reward_queue = &mut ctx.accounts.reward_event_queue;
+        //     let reward_position = reward_queue.append(RewardEvent {
+        //         vendor: *ctx.accounts.vendor.to_account_info().key,
+        //         ts: ctx.accounts.clock.unix_timestamp
+        //     })?;
+        //
+        // }
+
+        Ok(())
+    }
 }
 
 #[derive(Accounts)]
@@ -160,25 +212,46 @@ pub struct InitializeStakingPoolRequest<'info> {
     #[account(signer)]
     authority: AccountInfo<'info>,
     #[account(init)]
+    vendor: ProgramAccount<'info, RewardVendor>,
+    #[account(mut)]
+    vendor_vault: CpiAccount<'info, TokenAccount>,
+    #[account(init)]
     reward_event_q: ProgramAccount<'info, RewardQueue>,
     #[account("pool_mint.decimals == 0")]
     pool_mint: CpiAccount<'info, Mint>,
     rent: Sysvar<'info, Rent>
 }
 impl<'info> InitializeStakingPoolRequest<'info> {
-    fn validate(ctx: &Context<InitializeStakingPoolRequest<'info>>, state_pub_key: Pubkey, nonce: u8) -> Result<(), ProgramError> {
+    fn validate(ctx: &Context<InitializeStakingPoolRequest<'info>>, state_pub_key: Pubkey, staking_pool_nonce: u8, vendor_nonce: u8, mint: Pubkey) -> Result<(), ProgramError> {
         let staking_pool_imprint = Pubkey::create_program_address(
             &[
                 state_pub_key.as_ref(),
-                &[nonce],
+                &[staking_pool_nonce],
             ],
             ctx.program_id,
         ).map_err(|_| ErrorCode::InvalidNonce)?;
-
         if ctx.accounts.pool_mint.mint_authority != COption::Some(staking_pool_imprint) {
             return Err(ErrorCode::InvalidPoolMintAuthority.into());
         }
+
         assert_eq!(ctx.accounts.pool_mint.supply, 0);
+
+        let vendor_imprint = Pubkey::create_program_address(
+            &[
+                state_pub_key.as_ref(),
+                ctx.accounts.vendor.to_account_info().key.as_ref(),
+                &[vendor_nonce],
+            ],
+            ctx.program_id,
+        ).map_err(|_| ErrorCode::InvalidNonce)?;
+        if ctx.accounts.vendor_vault.owner != vendor_imprint {
+            return Err(ErrorCode::InvalidVaultOwner.into());
+        }
+
+        if ctx.accounts.vendor_vault.mint != mint {
+            return Err(ErrorCode::MintNotMatch.into())
+        }
+
         Ok(())
     }
 }
@@ -260,6 +333,65 @@ impl<'info> StakeRequest<'info> {
     }
 }
 
+#[derive(Accounts)]
+pub struct DropRewardRequest<'info> {
+    // Staking instance.
+    #[account(mut)]
+    reward_event_queue: ProgramAccount<'info, RewardQueue>,
+
+    // Vendor.
+    #[account(mut)]
+    vendor: ProgramAccount<'info, RewardVendor>,
+    #[account(mut)]
+    vendor_vault: CpiAccount<'info, TokenAccount>,
+
+    // Depositor.
+    #[account(mut)]
+    depositor: AccountInfo<'info>,
+    #[account(signer)]
+    depositor_authority: AccountInfo<'info>,
+
+    // Misc.
+    #[account("token_program.key == &token::ID")]
+    token_program: AccountInfo<'info>,
+    clock: Sysvar<'info, Clock>,
+    rent: Sysvar<'info, Rent>,
+}
+impl<'info> DropRewardRequest<'info> {
+    fn validate(_ctx: &Context<DropRewardRequest<'info>>) -> Result<(), ProgramError> {
+        // let staking_pool_imprint = Pubkey::create_program_address(
+        //     &[
+        //         ctx.accounts.staking_pool.key.as_ref(),
+        //         &[ctx.accounts.staking_pool.nonce],
+        //     ],
+        //     ctx.program_id,
+        // )
+        //     .map_err(|_| ErrorCode::InvalidNonce)?;
+        //
+        // if ctx.accounts.pool_mint.mint_authority != COption::Some(staking_pool_imprint) {
+        //     return Err(ErrorCode::InvalidPoolMintAuthority.into());
+        // }
+        msg!("Validate success");
+        Ok(())
+    }
+}
+
+#[account]
+pub struct RewardVendor {
+    pub vault: Pubkey,
+    pub mint: Pubkey,
+    pub nonce: u8,
+    pub pool_token_supply: u64,
+    pub position_in_reward_queue: u32,
+    pub start_ts: i64,
+    pub expiry_ts: i64,
+    pub expiry_receiver: Pubkey,
+    pub from: Pubkey,
+    pub total: u64,
+    pub expired: bool,
+    pub activated: bool,
+}
+
 #[associated]
 pub struct Member {
     /// The effective owner of the Member account.
@@ -292,6 +424,14 @@ pub struct BalanceSandbox {
     pub vault_stake: Pubkey,
     // Pending withdrawal vaults.
     pub vault_pw: Pubkey
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Default, Debug, Clone, PartialEq)]
+pub struct RewardPolicy {
+    start_drop_ts: i64,
+    end_drop_ts: i64,
+    interval: i64,
+    is_allow_claim_mid_stake: bool
 }
 
 /// When creating a member, the mints and owners of these accounts are correct.
@@ -372,7 +512,6 @@ impl RewardQueue {
 #[derive(Default, Clone, Copy, Debug, AnchorSerialize, AnchorDeserialize)]
 pub struct RewardEvent {
     vendor: Pubkey,
-    ts: i64,
-    locked: bool,
+    ts: i64
 }
 

@@ -56,5 +56,7 @@ pub enum ErrorCode {
     #[msg("Transfer deposit fail")]
     TransferDepositFail,
     #[msg("Mint prove token fail")]
-    MintProveTokenFail
+    MintProveTokenFail,
+    #[msg("Mint not match")]
+    MintNotMatch
 }

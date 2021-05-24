@@ -37,7 +37,7 @@ async function main() {
     console.log("balances.vaultPw: ", balances.vaultPw.toString())
 
     try {
-            let tx = await program.rpc.createMember(
+        let tx = await program.rpc.createMember(
             member_nonce,
             {
                 accounts: {
@@ -51,7 +51,7 @@ async function main() {
                 }
             }
         );
-            console.log("tx: ", tx);
+        console.log("tx: ", tx);
         let memberAccount = await program.account.member.associated(provider.wallet.publicKey);
         console.log("memberAccount.owner: ", memberAccount.authority.toString())
         console.log("memberAccount.metadata: ", memberAccount.metadata.toString())
@@ -65,7 +65,6 @@ async function main() {
         console.log("spt: ", memberBalances.spt.toString(), " - amount: ", await utils.tokenBalance(memberBalances.spt))
         console.log("vaultStake: ", memberBalances.vaultStake.toString(), " - amount: ", await utils.tokenBalance(memberBalances.vaultStake))
         console.log("vaultPw: ", memberBalances.vaultPw.toString(), " - amount: ", await utils.tokenBalance(memberBalances.vaultPw))
-        console.log("tx id: ", tx);
     } catch (e) {
         console.log("Create member Error: ", e);
     }

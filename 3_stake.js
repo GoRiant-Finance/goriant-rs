@@ -19,6 +19,7 @@ async function main() {
     const god = new anchor.web3.PublicKey(config.vault);
     let state_pubKey = await program.state.address();
     let state = await program.state();
+    console.log("vendor initialized: ", !state.vendor.equals(anchor.web3.PublicKey.default));
     let member = await program.account.member.associatedAddress(provider.wallet.publicKey);
     console.log("member: ", member.toString())
     let memberAccount = await program.account.member.associated(provider.wallet.publicKey);
@@ -33,7 +34,7 @@ async function main() {
     // let token_account = await provider.connection.getTokenAccountsByOwner(provider.wallet.publicKey, {mint: mint})
     let deposit_amount = new anchor.BN(100);
     try {
-            let tx = await program.rpc.depositAndState(
+        let tx = await program.rpc.depositAndState(
             deposit_amount,
             {
                 accounts: {
@@ -53,7 +54,7 @@ async function main() {
                 }
             }
         );
-            console.log("tx: ", tx);
+        console.log("tx: ", tx);
 
         console.log("memberAccount.owner: ", memberAccount.authority.toString())
         console.log("memberAccount.metadata: ", memberAccount.metadata.toString())
@@ -67,7 +68,6 @@ async function main() {
         console.log("spt: ", memberBalances.spt.toString(), " - amount: ", await utils.tokenBalance(memberBalances.spt))
         console.log("vaultStake: ", memberBalances.vaultStake.toString(), " - amount: ", await utils.tokenBalance(memberBalances.vaultStake))
         console.log("vaultPw: ", memberBalances.vaultPw.toString(), " - amount: ", await utils.tokenBalance(memberBalances.vaultPw))
-        console.log("tx id: ", tx);
     } catch (e) {
         console.log("Stake Error: ", e);
     }
