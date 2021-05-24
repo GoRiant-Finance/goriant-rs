@@ -53,10 +53,16 @@ pub enum ErrorCode {
     InvalidVestingSchedule,
     #[msg("Please specify the correct authority for this program.")]
     InvalidProgramAuthority,
-    #[msg("Transfer deposit fail")]
-    TransferDepositFail,
+    #[msg("Transfer token fail")]
+    TransferTokenFail,
     #[msg("Mint prove token fail")]
     MintProveTokenFail,
     #[msg("Mint not match")]
-    MintNotMatch
+    MintNotMatch,
+    #[msg("Burn staking token fail")]
+    BurnStakingTokenFail,
+    #[msg("Fund not enough to withdraw")]
+    InsufficientWithdraw,
+    #[msg("Value to calculate invalid")]
+    CalculateError
 }
