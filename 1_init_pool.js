@@ -30,9 +30,9 @@ async function main() {
     try {
         const stateRate = new anchor.BN(10);
         const withdrawTimeLock = new anchor.BN(10);
-        const start_block = new anchor.BN(new Date().getTime());
-        const end_block = new anchor.BN(new Date().getTime());
-        const reward_per_block = new anchor.BN(0);
+        const start_block = new anchor.BN(new Date().getTime() / 1000);
+        const end_block = new anchor.BN(new Date().getTime() / 1000 + 1000);
+        const reward_per_block = new anchor.BN(10);
         let state_pubKey = await program.state.address();
         const [staking_pool_imprint, state_imprint_nonce] = await anchor.web3.PublicKey.findProgramAddress(
             [state_pubKey.toBuffer()],

@@ -43,7 +43,6 @@ async function main() {
                 accounts: {
                     stakingPool: state_pubKey,
                     poolMint: state.poolMint,
-                    imprint: state.imprint,
                     member: member,
                     authority: provider.wallet.publicKey,
                     balances: balances,
@@ -59,25 +58,19 @@ async function main() {
         console.log("tx: ", tx);
         console.log("token account: ", token_account.toString(), " - amount: ", await utils.tokenBalance(token_account));
 
-        console.log("memberAccount.owner: ", memberAccount.authority.toString())
-        console.log("memberAccount.metadata: ", memberAccount.metadata.toString())
-        console.log("memberAccount.rewardsCursor: ", memberAccount.rewardsCursor.toString())
-        console.log("memberAccount.lastStakeTs: ", memberAccount.lastStakeTs.toString())
-        console.log("memberAccount.nonce: ", memberAccount.nonce.toString());
 
-        let memberBalances = memberAccount.balances;
 
-        console.log("memberAccount.balances");
-        console.log("spt: ", memberBalances.spt.toString(), " - amount: ", await utils.tokenBalance(memberBalances.spt))
-        console.log("vaultStake: ", memberBalances.vaultStake.toString(), " - amount: ", await utils.tokenBalance(memberBalances.vaultStake))
-        console.log("vaultPw: ", memberBalances.vaultPw.toString(), " - amount: ", await utils.tokenBalance(memberBalances.vaultPw))
-
-        let token_accounts = (await provider.connection.getTokenAccountsByOwner(provider.wallet.publicKey, {mint: mint})).value;
-        for (const account of token_accounts) {
-            console.log("account: ", account.pubkey.toString(), " - amount: ", await utils.tokenBalance(account.pubkey));
-        }
     } catch (e) {
         console.log("Stake Error: ", e);
+    }
+    memberAccount = await program.account.member.associated(provider.wallet.publicKey);
+    await utils.printMemberAccountInfo(memberAccount);
+    // load new state
+    state = await program.state();
+    await utils.log_state(state);
+    let token_accounts = (await provider.connection.getTokenAccountsByOwner(provider.wallet.publicKey, {mint: mint})).value;
+    for (const account of token_accounts) {
+        console.log("account: ", account.pubkey.toString(), " - amount: ", await utils.tokenBalance(account.pubkey));
     }
 }
 
