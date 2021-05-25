@@ -59,6 +59,8 @@ mod staking {
                    stake_rate: u64,
                    withdraw_time_lock: i64,
                    start_block: i64,
+                   reward_per_block: i64,
+                   bonus_end_block: i64,
         ) -> Result<Self, ProgramError>
         {
             let staking_pool_imprint = Pubkey::create_program_address(
@@ -79,10 +81,10 @@ mod staking {
                 stake_rate,
                 pool_mint: *ctx.accounts.pool_mint.to_account_info().key,
                 acc_token_per_share: 0,
-                bonus_end_block: 0,
-                start_block: 0,
+                bonus_end_block,
+                start_block,
                 last_reward_block: start_block,
-                reward_per_block: 0,
+                reward_per_block,
             };
 
             msg!("Initialize Staking pool");
@@ -97,7 +99,7 @@ mod staking {
             }
             if start_block < end_block {
                 msg!("New startBlock must be lower than new endBlock");
-                return Err(ErrorCode::InvalidExpiry.into())
+                return Err(ErrorCode::InvalidExpiry.into());
             }
             if ctx.accounts.clock.unix_timestamp < start_block {
                 msg!("New startBlock must be higher than current block");
@@ -511,8 +513,8 @@ pub struct CheckPendingRewardRequest<'info> {
 }
 
 #[derive(Accounts)]
-pub struct UpdateBlockRequest<'info>{
-    clock: Sysvar<'info, Clock>
+pub struct UpdateBlockRequest<'info> {
+    clock: Sysvar<'info, Clock>,
 }
 
 #[associated]

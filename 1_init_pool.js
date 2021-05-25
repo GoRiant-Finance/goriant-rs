@@ -28,10 +28,11 @@ async function main() {
     console.log("mint: ", mint.toString());
     console.log("god: ", god.toString());
     try {
-        const rewardQ = new anchor.web3.Account();
         const stateRate = new anchor.BN(10);
         const withdrawTimeLock = new anchor.BN(10);
-        const rewardQLen = 170;
+        const start_block = new anchor.BN(new Date().getTime());
+        const end_block = new anchor.BN(new Date().getTime());
+        const reward_per_block = new anchor.BN(0);
         let state_pubKey = await program.state.address();
         const [staking_pool_imprint, state_imprint_nonce] = await anchor.web3.PublicKey.findProgramAddress(
             [state_pubKey.toBuffer()],
@@ -47,18 +48,15 @@ async function main() {
             state_imprint_nonce,
             stateRate,
             withdrawTimeLock,
-            rewardQLen,
+            start_block,
+            reward_per_block,
+            end_block,
             {
                 accounts: {
                     authority: provider.wallet.publicKey,
-                    rewardEventQ: rewardQ.publicKey,
                     poolMint,
                     rent: anchor.web3.SYSVAR_RENT_PUBKEY
-                },
-                signers: [rewardQ],
-                instructions: [
-                    await program.account.rewardQueue.createInstruction(rewardQ, 8250)
-                ]
+                }
             }
         );
         console.log("tx id: ", tx);
@@ -69,15 +67,7 @@ async function main() {
 
 
     let state = await program.state();
-    console.log("state.key: ", state.key.toString());
-    console.log("state.authority: ", state.authority.toString());
-    console.log("state.imprint: ", state.imprint.toString());
-    console.log("state.nonce: ", state.nonce.toString())
-    console.log("state.withdrawTimeLock: ", state.withdrawTimeLock.toString())
-    console.log("state.rewardEventQ: ", state.rewardEventQ.toString())
-    console.log("state.mint: ", state.mint.toString())
-    console.log("state.poolMint: ", state.poolMint.toString())
-    console.log("state.stakeRate: ", state.stakeRate.toString())
+    await utils.log_state(state);
 }
 
 main().then(() => console.log('Success'));

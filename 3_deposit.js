@@ -32,12 +32,11 @@ async function main() {
 
     let deposit_amount = new anchor.BN(100);
     try {
-        let tx = await program.rpc.depositAndState(
+        let tx = await program.rpc.deposit(
             deposit_amount,
             {
                 accounts: {
                     stakingPool: state_pubKey,
-                    rewardEventQ: state.rewardEventQ,
                     poolMint: state.poolMint,
                     imprint: state.imprint,
                     member: member,
@@ -53,22 +52,14 @@ async function main() {
             }
         );
         console.log("tx: ", tx);
-
-        console.log("memberAccount.authority: ", memberAccount.authority.toString())
-        console.log("memberAccount.metadata: ", memberAccount.metadata.toString())
-        console.log("memberAccount.rewardsCursor: ", memberAccount.rewardsCursor.toString())
-        console.log("memberAccount.lastStakeTs: ", memberAccount.lastStakeTs.toString())
-        console.log("memberAccount.nonce: ", memberAccount.nonce.toString());
-
-        let memberBalances = memberAccount.balances;
-
-        console.log("memberAccount.balances");
-        console.log("spt: ", memberBalances.spt.toString(), " - amount: ", await utils.tokenBalance(memberBalances.spt))
-        console.log("vaultStake: ", memberBalances.vaultStake.toString(), " - amount: ", await utils.tokenBalance(memberBalances.vaultStake))
-        console.log("vaultPw: ", memberBalances.vaultPw.toString(), " - amount: ", await utils.tokenBalance(memberBalances.vaultPw))
     } catch (e) {
         console.log("Stake Error: ", e);
     }
+    memberAccount = await program.account.member.associated(provider.wallet.publicKey);
+    await utils.printMemberAccountInfo(memberAccount);
+    // load new state
+    state = await program.state();
+    await utils.log_state(state);
 }
 
 main().then(() => console.log('Success'));

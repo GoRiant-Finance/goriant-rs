@@ -31,9 +31,6 @@ async function main() {
     let txSigns = await provider.send(mainTx.tx, mainTx.signers);
 
     console.log("create balance sandbox tx: ", txSigns);
-    console.log("balances.spt: ", balances.spt.toString());
-    console.log("balances.vaultStake: ", balances.vaultStake.toString())
-    console.log("balances.vaultPw: ", balances.vaultPw.toString())
 
     try {
         let tx = await program.rpc.createMember(
@@ -52,18 +49,7 @@ async function main() {
         );
         console.log("tx: ", tx);
         let memberAccount = await program.account.member.associated(provider.wallet.publicKey);
-        console.log("memberAccount.owner: ", memberAccount.authority.toString())
-        console.log("memberAccount.metadata: ", memberAccount.metadata.toString())
-        console.log("memberAccount.rewardsCursor: ", memberAccount.rewardsCursor.toString())
-        console.log("memberAccount.lastStakeTs: ", memberAccount.lastStakeTs.toString())
-        console.log("memberAccount.nonce: ", memberAccount.nonce.toString());
-
-        let memberBalances = memberAccount.balances;
-
-        console.log("memberAccount.balances");
-        console.log("spt: ", memberBalances.spt.toString(), " - amount: ", await utils.tokenBalance(memberBalances.spt))
-        console.log("vaultStake: ", memberBalances.vaultStake.toString(), " - amount: ", await utils.tokenBalance(memberBalances.vaultStake))
-        console.log("vaultPw: ", memberBalances.vaultPw.toString(), " - amount: ", await utils.tokenBalance(memberBalances.vaultPw))
+        await utils.printMemberAccountInfo(memberAccount);
     } catch (e) {
         console.log("Create member Error: ", e);
     }

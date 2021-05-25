@@ -4,6 +4,21 @@ const fs = require('fs');
 
 // const provider = anchor.Provider.local('https://api.devnet.solana.com');
 const provider = anchor.Provider.local();
+async function log_state(state) {
+  console.log("state.key: ", state.key.toString());
+  console.log("state.authority: ", state.authority.toString());
+  console.log("state.imprint: ", state.imprint.toString());
+  console.log("state.nonce: ", state.nonce.toString())
+  console.log("state.withdrawTimeLock: ", state.withdrawTimeLock.toString())
+  console.log("state.mint: ", state.mint.toString())
+  console.log("state.poolMint: ", state.poolMint.toString())
+  console.log("state.stakeRate: ", state.stakeRate.toString())
+  console.log("state.accTokenPerShare: ", state.accTokenPerShare.toString())
+  console.log("state.startBlock: ", state.startBlock.toString())
+  console.log("state.bonusEndBlock: ", state.bonusEndBlock.toString())
+  console.log("state.lastRewardBlock: ", state.lastRewardBlock.toString())
+  console.log("state.rewardPerBlock: ", state.rewardPerBlock.toString())
+}
 async function createBalanceSandbox(provider, r, registrySigner) {
   const spt = new anchor.web3.Account();
   const vaultStake = new anchor.web3.Account();
@@ -58,13 +73,19 @@ async function balance(address) {
   return provider.connection.getBalance(address);
 }
 
-async function printMemberAccountInfo(name, v) {
-  console.log("  ", name);
-  console.log("   registrar: ", v.registrar.toBase58(), " ", await balance(v.registrar));
-  console.log("   beneficiary: ", v.beneficiary.toBase58(), " ", await balance(v.beneficiary));
-  console.log("   metadata: ", v.metadata.toBase58(), " ", await balance(v.metadata));
-  await printBalance("member.balances", v.balances);
-  await printBalance("member.balancesLocked", v.balancesLocked);
+async function printMemberAccountInfo(memberAccount) {
+  console.log("memberAccount.authority: ", memberAccount.authority.toString())
+  console.log("memberAccount.metadata: ", memberAccount.metadata.toString())
+  console.log("memberAccount.nonce: ", memberAccount.nonce.toString())
+  console.log("memberAccount.rewardDebt: ", memberAccount.rewardDebt.toString())
+
+  let memberBalances = memberAccount.balances;
+
+  console.log("memberAccount.balances");
+  console.log("spt: ", memberBalances.spt.toString(), " - amount: ", await tokenBalance(memberBalances.spt))
+  console.log("vaultStake: ", memberBalances.vaultStake.toString(), " - amount: ", await tokenBalance(memberBalances.vaultStake))
+  console.log("vaultPw: ", memberBalances.vaultPw.toString(), " - amount: ", await tokenBalance(memberBalances.vaultPw))
+
 }
 
 
@@ -76,41 +97,12 @@ async function printStructInfo(name, v) {
   console.log("   delegated amount: ", v.delegatedAmount.toString());
 }
 
-async function printRegistrar(name, v) {
-  console.log("    ", name)
-  console.log("        registrarAccount.authority: ", v.authority.toBase58(), " ", await balance(v.authority));
-  console.log("        registrarAccount.rewardEventQ: ", v.rewardEventQ.toBase58(), " ", await balance(v.rewardEventQ));
-  console.log("        registrarAccount.mint: ", v.mint.toBase58(), " ", await balance(v.mint));
-  console.log("        registrarAccount.poolMint: ", v.poolMint.toBase58(), " ", await balance(v.poolMint));
-}
-
 async function printBalance(name, v) {
   console.log("    ", name);
   console.log("        spt: ", v.spt.toBase58(), " ", await balance(v.spt));
   console.log("        vault: ", v.vault.toBase58(), " ", await balance(v.vault));
   console.log("        vaultStake: ", v.vaultStake.toBase58(), " ", await balance(v.vaultStake));
   console.log("        vaultPendingWithdraw: ", v.vaultPendingWithdraw.toBase58(), " ", await balance(v.vaultPendingWithdraw));
-}
-
-async function printVendor(name, v) {
-  console.log("  ", name);
-  console.log("   registrar: ", v.registrar.toBase58(), " ", await balance(v.registrar));
-  console.log("   vault: ", v.vault.toBase58(), " ", await balance(v.vault));
-  console.log("   mint: ", v.mint.toBase58(), " ", await balance(v.mint));
-  console.log("   from: ", v.from.toBase58(), " ", await balance(v.from));
-
-  console.log("   poolTokenSupply: ", v.poolTokenSupply.toString());
-  console.log("   total: ", v.total.toString());
-  console.log("   kind: ", JSON.stringify(v.kind));
-}
-
-async function printRegistrarSigner(registrarAccount) {
-
-  console.log("registrarAccount.authority: ", registrarAccount.authority.toString(), " ", await balance(registrarAccount.authority));
-  console.log("registrarAccount.rewardEventQ: ", registrarAccount.rewardEventQ.toString(), " ", await balance(registrarAccount.rewardEventQ));
-  console.log("registrarAccount.mint: ", registrarAccount.mint.toString(), " ", await balance(registrarAccount.mint));
-  console.log("registrarAccount.stakeRate: ", registrarAccount.stakeRate.toString(), "%");
-  console.log("registrarAccount.withdrawalTimelock: ", registrarAccount.withdrawalTimelock.toString());
 }
 
 async function sleep(ms) {
@@ -137,13 +129,11 @@ module.exports = {
   tokenBalance,
   sleep,
   createBalanceSandbox,
+  log_state,
   balance,
   printBalance,
-  printRegistrar,
   printStructInfo,
   printMemberAccountInfo,
-  printVendor,
-  printRegistrarSigner,
   readConfig,
   writeConfig
 };
