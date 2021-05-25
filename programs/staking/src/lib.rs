@@ -88,8 +88,43 @@ mod staking {
             msg!("Initialize Staking pool");
             Ok(staking_pool)
         }
-    }
 
+        pub fn update_start_and_end_blocks(&mut self, ctx: Context<UpdateBlockRequest>, start_block: i64, end_block: i64) -> Result<(), ProgramError>
+        {
+            if ctx.accounts.clock.unix_timestamp < self.start_block {
+                msg!("Pool has started");
+                return Err(ErrorCode::InvalidExpiry.into());
+            }
+            if start_block < end_block {
+                msg!("New startBlock must be lower than new endBlock");
+                return Err(ErrorCode::InvalidExpiry.into())
+            }
+            if ctx.accounts.clock.unix_timestamp < start_block {
+                msg!("New startBlock must be higher than current block");
+                return Err(ErrorCode::InvalidExpiry.into());
+            }
+            self.start_block = start_block;
+            self.bonus_end_block = end_block;
+            self.last_reward_block = start_block;
+            Ok(())
+        }
+
+        pub fn update_reward_per_block(&mut self, ctx: Context<UpdateBlockRequest>, reward_per_block: i64) -> Result<(), ProgramError>
+        {
+            if ctx.accounts.clock.unix_timestamp < self.start_block {
+                msg!("Pool has started");
+                return Err(ErrorCode::InvalidExpiry.into());
+            }
+            self.reward_per_block = reward_per_block;
+            Ok(())
+        }
+
+        pub fn stop_reward(&mut self, ctx: Context<UpdateBlockRequest>) -> Result<(), ProgramError>
+        {
+            self.bonus_end_block = ctx.accounts.clock.unix_timestamp;
+            Ok(())
+        }
+    }
 
     pub fn create_member(ctx: Context<CreateMemberRequest>, member_nonce: u8) -> Result<(), ProgramError>
     {
@@ -304,6 +339,24 @@ mod staking {
 
         Ok(())
     }
+
+    pub fn cal_pending_reward(ctx: Context<CheckPendingRewardRequest>) -> Result<(), ProgramError>
+    {
+        let staked_token_supply = ctx.accounts.balances.spt.amount;
+        let member_reward_debt = ctx.accounts.member.reward_debt;
+        let state = ctx.accounts.staking_pool.clone();
+        let amount = ctx.accounts.balances.spt.amount.clone();
+        let pending_reward = if ctx.accounts.clock.unix_timestamp > state.last_reward_block && staked_token_supply != 0 {
+            let multiplier = get_multiplier(state.last_reward_block, ctx.accounts.clock.unix_timestamp, state.bonus_end_block);
+            let cake_reward = multiplier * state.reward_per_block;
+            let adjusted_token_per_share = state.acc_token_per_share + cake_reward / staked_token_supply as i64;
+            amount * adjusted_token_per_share as u64 - member_reward_debt
+        } else {
+            amount * state.acc_token_per_share as u64 - member_reward_debt
+        };
+        msg!("Pending reward: {}", pending_reward);
+        Ok(())
+    }
 }
 
 #[derive(Accounts)]
@@ -438,6 +491,30 @@ pub struct WithDrawRequest<'info> {
     rent: Sysvar<'info, Rent>,
 }
 
+#[derive(Accounts)]
+pub struct CheckPendingRewardRequest<'info> {
+    staking_pool: ProgramState<'info, StakingPool>,
+    pool_mint: CpiAccount<'info, Mint>,
+
+    /// Member relate account
+    #[account(has_one = authority)]
+    member: ProgramAccount<'info, Member>,
+    #[account(mut, signer)]
+    authority: AccountInfo<'info>,
+    #[account(
+    "balances.spt.mint == staking_pool.pool_mint",
+    "balances.vault_stake.mint == staking_pool.mint",
+    "balances.vault_pw.mint == staking_pool.mint"
+    )]
+    balances: BalanceSandboxAccounts<'info>,
+    clock: Sysvar<'info, Clock>,
+}
+
+#[derive(Accounts)]
+pub struct UpdateBlockRequest<'info>{
+    clock: Sysvar<'info, Clock>
+}
+
 #[associated]
 pub struct Member {
     /// The effective owner of the Member account.
@@ -493,7 +570,7 @@ impl<'info> From<&BalanceSandboxAccounts<'info>> for BalanceSandbox {
     }
 }
 
-pub fn update_pool<'info>(state: &mut ProgramState<'info, StakingPool>, clock: Sysvar<'info, Clock>, member_amount: u64) -> Result<(), ProgramError>{
+pub fn update_pool<'info>(state: &mut ProgramState<'info, StakingPool>, clock: Sysvar<'info, Clock>, member_amount: u64) -> Result<(), ProgramError> {
     if clock.unix_timestamp <= state.last_reward_block {
         return Err(ErrorCode::InvalidDepositor.into());
     }
@@ -511,6 +588,7 @@ pub fn update_pool<'info>(state: &mut ProgramState<'info, StakingPool>, clock: S
 
     Ok(())
 }
+
 pub fn get_multiplier(from: i64, to: i64, bonus_end_block: i64) -> i64 {
     return if to <= bonus_end_block {
         to - from
@@ -518,5 +596,5 @@ pub fn get_multiplier(from: i64, to: i64, bonus_end_block: i64) -> i64 {
         0
     } else {
         bonus_end_block - from
-    }
+    };
 }
