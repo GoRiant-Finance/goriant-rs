@@ -1,4 +1,5 @@
 const anchor = require("@project-serum/anchor");
+const serumCmn = require("@project-serum/common");
 const TokenInstructions = require("@project-serum/serum").TokenInstructions;
 const fs = require('fs');
 const utils = require("./utils");
@@ -15,42 +16,67 @@ let program = new anchor.Program(idl, program_id);
 
 
 async function main() {
+    const mint = new anchor.web3.PublicKey(config.token);
     const god = new anchor.web3.PublicKey(config.vault);
+    let state_address = await program.state.address();
     let state = await program.state();
-    console.log("state.vendor: ", state.vendor.toString());
-    let vendor = await program.account.rewardVendor(state.vendor);
+    let vendor = new anchor.web3.Account();
+    let vendorVault = new anchor.web3.Account();
     let drop_amount = new anchor.BN(1000);
+    const [
+        vendorImprint,
+        nonce,
+    ] = await anchor.web3.PublicKey.findProgramAddress(
+        [state_address.toBuffer(), vendor.publicKey.toBuffer()],
+        program.programId
+    );
+    const expiry = new anchor.BN(Date.now() / 1000 + 5);
     try {
         let tx = await program.rpc.dropReward(
             drop_amount,
+            expiry,
+            provider.wallet.publicKey,
+            nonce,
             {
                 accounts: {
                     rewardEventQueue: state.rewardEventQ,
-                    vendor: state.vendor,
-                    vendorVault: vendor.vault,
+                    poolMint: state.poolMint,
+                    vendor: vendor.publicKey,
+                    vendorVault: vendorVault.publicKey,
                     depositor: god,
                     depositorAuthority: provider.wallet.publicKey,
                     tokenProgram: TokenInstructions.TOKEN_PROGRAM_ID,
                     clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
                     rent: anchor.web3.SYSVAR_RENT_PUBKEY
-                }
+                },
+                signers: [vendorVault, vendor],
+                instructions: [
+                    ...(await serumCmn.createTokenAccountInstrs(
+                        provider,
+                        vendorVault.publicKey,
+                        mint,
+                        vendorImprint
+                    )),
+                    await program.account.rewardVendor.createInstruction(vendor),
+                ]
             }
         );
         console.log("tx: ", tx);
 
-        console.log("vendor.key: ", state.vendor.toString())
-        console.log("vendor.vault: ", vendor.vault.toString(), " - amount: ", await utils.tokenBalance(vendor.vault))
-        console.log("vendor.mint: ", vendor.mint.toString())
-        console.log("vendor.nonce: ", vendor.nonce.toString())
-        console.log("vendor.pool_token_supply: ", vendor.poolTokenSupply.toString())
-        console.log("vendor.positionInRewardQueue: ", vendor.positionInRewardQueue.toString())
-        console.log("vendor.startTs: ", vendor.startTs.toString())
-        console.log("vendor.expiryTs: ", vendor.expiryTs.toString())
-        console.log("vendor.expiryReceiver: ", vendor.expiryReceiver.toString())
-        console.log("vendor.from: ", vendor.from.toString())
-        console.log("vendor.total: ", vendor.total.toString())
-        console.log("vendor.expired: ", vendor.expired.toString())
-        console.log("vendor.activated: ", vendor.activated.toString())
+        const vendorAccount = await program.account.rewardVendor(vendor.publicKey);
+        console.log("vendor.key: ", vendor.publicKey.toString())
+        console.log("vendor.vault: ", vendorVault.publicKey.toString(), " - amount: ", await utils.tokenBalance(vendorVault.publicKey))
+        console.log("vendor.mint: ", vendorAccount.mint.toString())
+        console.log("vendor.nonce: ", vendorAccount.nonce.toString())
+        console.log("vendor.pool_token_supply: ", vendorAccount.poolTokenSupply.toString())
+        console.log("vendor.currentRewardPosition: ", vendorAccount.currentRewardPosition.toString())
+        console.log("vendor.startTs: ", vendorAccount.startTs.toString())
+        console.log("vendor.expiryTs: ", vendorAccount.expiryTs.toString())
+        console.log("vendor.expiryReceiver: ", vendorAccount.expiryReceiver.toString())
+        console.log("vendor.from: ", vendorAccount.from.toString())
+        console.log("vendor.total: ", vendorAccount.total.toString())
+        console.log("vendor.expired: ", vendorAccount.expired.toString())
+        console.log("vendor.activated: ", vendorAccount.activated.toString())
     } catch (e) {
         console.log("Drop reward Error: ", e);
     }

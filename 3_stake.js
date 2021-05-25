@@ -15,14 +15,12 @@ let program = new anchor.Program(idl, program_id);
 
 
 async function main() {
-    // const mint = new anchor.web3.PublicKey(config.token);
     const god = new anchor.web3.PublicKey(config.vault);
     let state_pubKey = await program.state.address();
     let state = await program.state();
-    console.log("vendor initialized: ", !state.vendor.equals(anchor.web3.PublicKey.default));
     let member = await program.account.member.associatedAddress(provider.wallet.publicKey);
-    console.log("member: ", member.toString())
     let memberAccount = await program.account.member.associated(provider.wallet.publicKey);
+    console.log("member: ", member.toString())
     let balances = memberAccount.balances;
     const [
         memberImprint,
@@ -31,7 +29,7 @@ async function main() {
         [state_pubKey.toBuffer(), member.toBuffer()],
         program.programId
     );
-    // let token_account = await provider.connection.getTokenAccountsByOwner(provider.wallet.publicKey, {mint: mint})
+
     let deposit_amount = new anchor.BN(100);
     try {
         let tx = await program.rpc.depositAndState(
@@ -39,6 +37,7 @@ async function main() {
             {
                 accounts: {
                     stakingPool: state_pubKey,
+                    rewardEventQ: state.rewardEventQ,
                     poolMint: state.poolMint,
                     imprint: state.imprint,
                     member: member,
@@ -49,14 +48,13 @@ async function main() {
                     depositorAuthority: provider.wallet.publicKey,
                     tokenProgram: TokenInstructions.TOKEN_PROGRAM_ID,
                     clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
-                    rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-                    systemProgram: anchor.web3.SystemProgram.programId
+                    rent: anchor.web3.SYSVAR_RENT_PUBKEY
                 }
             }
         );
         console.log("tx: ", tx);
 
-        console.log("memberAccount.owner: ", memberAccount.authority.toString())
+        console.log("memberAccount.authority: ", memberAccount.authority.toString())
         console.log("memberAccount.metadata: ", memberAccount.metadata.toString())
         console.log("memberAccount.rewardsCursor: ", memberAccount.rewardsCursor.toString())
         console.log("memberAccount.lastStakeTs: ", memberAccount.lastStakeTs.toString())

@@ -29,30 +29,36 @@ mod staking {
         pub nonce: u8,
         /// Number of seconds that must pass for a withdrawal to complete.
         pub withdraw_time_lock: i64,
-        /// Global event queue for reward vendoring.
-        pub reward_event_q: Pubkey,
         /// Mint of the tokens that can be staked.
         pub mint: Pubkey,
         /// Staking pool token mint.
         pub pool_mint: Pubkey,
-        /// Vendor of pool
-        pub vendor: Pubkey,
         /// The amount of tokens (not decimal) that must be staked to get a single
         /// staking pool token.
         pub stake_rate: u64,
+
+        /// Reward Info
+        /// Accrued token per share
+        pub acc_token_per_share: i64,
+        /// The block number when CAKE mining ends.
+        pub bonus_end_block: i64,
+        /// The block number when CAKE mining starts.
+        pub start_block: i64,
+        /// The block number of the last pool update
+        pub last_reward_block: i64,
+        /// CAKE tokens created per block.
+        pub reward_per_block: i64,
     }
 
     impl StakingPool {
-        #[access_control(InitializeStakingPoolRequest::validate(& ctx, state_pub_key, staking_pool_nonce, vendor_nonce, mint))]
-        pub fn new(
-            ctx: Context<InitializeStakingPoolRequest>,
-            mint: Pubkey,
-            state_pub_key: Pubkey,
-            vendor_pub_key: Pubkey,
-            staking_pool_nonce: u8,
-            vendor_nonce: u8,
-            stake_rate: u64,
-            withdraw_time_lock: i64,
+        #[access_control(InitializeStakingPoolRequest::validate(& ctx, state_pub_key, staking_pool_nonce))]
+        pub fn new(ctx: Context<InitializeStakingPoolRequest>,
+                   mint: Pubkey,
+                   state_pub_key: Pubkey,
+                   staking_pool_nonce: u8,
+                   stake_rate: u64,
+                   withdraw_time_lock: i64,
+                   start_block: i64,
         ) -> Result<Self, ProgramError>
         {
             let staking_pool_imprint = Pubkey::create_program_address(
@@ -63,34 +69,21 @@ mod staking {
                 ctx.program_id,
             ).map_err(|_| ErrorCode::InvalidNonce)?;
 
-            let vendor = &mut ctx.accounts.vendor;
-            vendor.activated = false;
-            vendor.vault = *ctx.accounts.vendor_vault.to_account_info().key;
-            vendor.mint = ctx.accounts.vendor_vault.mint;
-            vendor.nonce = vendor_nonce;
-            vendor.pool_token_supply = vec![0];
-            vendor.total = Vec::new();
-            vendor.current_reward_position = 0;
-            // vendor.start_ts = ctx.accounts.clock.unix_timestamp;
-            // vendor.expiry_ts = expiry_ts;
-            // vendor.expiry_receiver = expiry_receiver;
-            // vendor.from = *ctx.accounts.depositor_authority.key;
-
-
-
             let staking_pool = Self {
                 key: state_pub_key,
                 authority: *ctx.accounts.authority.key,
                 imprint: staking_pool_imprint,
                 nonce: staking_pool_nonce,
                 withdraw_time_lock,
-                reward_event_q: *ctx.accounts.reward_event_q.to_account_info().key,
                 mint,
-                pool_mint: *ctx.accounts.pool_mint.to_account_info().key,
-                vendor: vendor_pub_key,
                 stake_rate,
+                pool_mint: *ctx.accounts.pool_mint.to_account_info().key,
+                acc_token_per_share: 0,
+                bonus_end_block: 0,
+                start_block: 0,
+                last_reward_block: start_block,
+                reward_per_block: 0,
             };
-
 
             msg!("Initialize Staking pool");
             Ok(staking_pool)
@@ -105,27 +98,61 @@ mod staking {
         member.authority = *ctx.accounts.authority.key;
         member.balances = (&ctx.accounts.balances).into();
         member.nonce = member_nonce;
-        member.rewards_cursor = -1;
+        member.reward_debt = 0;
 
         Ok(())
     }
 
-    #[access_control(StakeRequest::validate(& ctx))]
-    pub fn deposit_and_state(ctx: Context<StakeRequest>, amount: u64) -> Result<(), ProgramError>
+    pub fn deposit(ctx: Context<DepositRequest>, amount: u64) -> Result<(), ProgramError>
     {
-        let vendor = &mut ctx.accounts.vendor;
-        let total_supply = vendor.pool_token_supply.get_mut(vendor.current_reward_position).unwrap();
-        if total_supply.checked_add(amount).is_none() {
-            return Err(ErrorCode::CalculateError.into());
+        if amount < 0 {
+            return Err(ErrorCode::InvalidDepositor.into());
+        }
+        let state = &mut ctx.accounts.staking_pool;
+        update_pool(state, ctx.accounts.clock.clone(), ctx.accounts.balances.spt.amount.clone()).unwrap();
+
+        let balances = ctx.accounts.balances.clone();
+        let member = &mut ctx.accounts.member;
+        {
+            if balances.spt.amount > 0 {
+                let pending_reward = balances.spt.amount * state.acc_token_per_share as u64 - member.reward_debt;
+                msg!("pending reward: {}", pending_reward);
+                // Deposit from depositor account to stake vault
+                // {
+                //     msg!("Transfer pending reward from reward to vault pending");
+                //     let seeds = &[
+                //         ctx.accounts.staking_pool.to_account_info().key.as_ref(),
+                //         ctx.accounts.member.to_account_info().key.as_ref(),
+                //         &[ctx.accounts.member.nonce],
+                //     ];
+                //     let member_imprint = &[&seeds[..]];
+                //     let cpi_ctx = CpiContext::new_with_signer(
+                //         ctx.accounts.token_program.clone(),
+                //         token::Transfer {
+                //             from: ctx.accounts.depositor.to_account_info(),
+                //             to: ctx.accounts.balances.vault_stake.to_account_info(),
+                //             authority: ctx.accounts.depositor_authority.to_account_info(),
+                //         },
+                //         member_imprint,
+                //     );
+                //     // // Convert from stake-token units to mint-token units.
+                //     // let token_amount = amount
+                //     //     .checked_mul(ctx.accounts.staking_pool.stake_rate)
+                //     //     .unwrap();
+                //     if let Ok(()) = token::transfer(cpi_ctx, amount) {} else {
+                //         return Err(ErrorCode::TransferTokenFail.into());
+                //     };
+                // }
+            }
         }
 
         // Deposit from depositor account to stake vault
         {
             msg!("Transfer token from depositor to stake vault");
             let seeds = &[
-                ctx.accounts.staking_pool.to_account_info().key.as_ref(),
-                ctx.accounts.member.to_account_info().key.as_ref(),
-                &[ctx.accounts.member.nonce],
+                state.to_account_info().key.as_ref(),
+                member.to_account_info().key.as_ref(),
+                &[member.nonce],
             ];
             let member_imprint = &[&seeds[..]];
             let cpi_ctx = CpiContext::new_with_signer(
@@ -150,8 +177,8 @@ mod staking {
         {
             msg!("Mint proof token to staker vault");
             let seeds = &[
-                ctx.accounts.staking_pool.to_account_info().key.as_ref(),
-                &[ctx.accounts.staking_pool.nonce],
+                state.to_account_info().key.as_ref(),
+                &[state.nonce],
             ];
             let staking_pool_imprint = &[&seeds[..]];
 
@@ -165,98 +192,14 @@ mod staking {
                 staking_pool_imprint,
             );
             let spt_amount = amount
-                .checked_div(ctx.accounts.staking_pool.stake_rate)
+                .checked_div(state.stake_rate)
                 .unwrap();
             if let Ok(()) = token::mint_to(cpi_ctx, spt_amount) {} else {
                 return Err(ErrorCode::MintProveTokenFail.into());
             };
         }
 
-        msg!("Update total stake token");
-        vendor.pool_token_supply.checked_add(amount).unwrap();
-
-        msg!("Update last stake time");
-        // Update stake timestamp.
-        let member = &mut ctx.accounts.member;
-        member.last_stake_ts = ctx.accounts.clock.unix_timestamp;
-        member.rewards_cursor = vendor.current_reward_position;
-        Ok(())
-    }
-
-    #[access_control(DropRewardRequest::validate(& ctx))]
-    pub fn drop_reward(ctx: Context<DropRewardRequest>, amount: u64) -> Result<(), ProgramError>
-    {
-        // Transfer funds into the vendor's vault.
-        {
-            msg!("Transfer token from depositor to stake vault");
-            let cpi_ctx = CpiContext::new(
-                ctx.accounts.token_program.clone(),
-                token::Transfer {
-                    from: ctx.accounts.depositor.clone(),
-                    to: ctx.accounts.vendor_vault.to_account_info(),
-                    authority: ctx.accounts.depositor_authority.clone(),
-                },
-            );
-            if let Ok(()) = token::transfer(cpi_ctx, amount) {} else {
-                return Err(ErrorCode::TransferTokenFail.into());
-            };
-        }
-
-        let vendor = &mut ctx.accounts.vendor;
-        let previous_supply  = vendor.pool_token_supply.get(vendor.current_reward_position).unwrap();
-
-        vendor.pool_token_supply.push(previous_supply.into());
-        vendor.total.push(amount);
-        vendor.current_reward_position += 1;
-        vendor.activated = true;
-
-        // Add the event to the reward queue.
-        let reward_queue = &mut ctx.accounts.reward_event_queue;
-        let cursor = reward_queue.append(RewardEvent {
-            vendor: *ctx.accounts.vendor.to_account_info().key,
-            ts: ctx.accounts.clock.unix_timestamp,
-        })?;
-
-        Ok(())
-    }
-
-    pub fn claim_reward(ctx: Context<ClaimRewardRequest>) -> Result<(), ProgramError>
-    {
-
-        let current_position_in_q = ctx.accounts.member.rewards_cursor;
-        let spt_total = ctx.accounts.balances.vault_stake.amount;
-        let reward_amount = spt_total
-            .checked_div(ctx.accounts.vendor.pool_token_supply)
-            .unwrap()
-            .checked_mul(ctx.accounts.vendor.total)
-            .unwrap();
-        assert!(reward_amount > 0);
-
-        // Send reward to the given token account.
-        {
-            let seeds = &[
-                ctx.accounts.staking_pool.to_account_info().key.as_ref(),
-                ctx.accounts.vendor.to_account_info().key.as_ref(),
-                &[ctx.accounts.vendor.nonce],
-            ];
-            let vendor_imprint = &[&seeds[..]];
-            let cpi_ctx = CpiContext::new_with_signer(
-                ctx.accounts.token_program.clone(),
-                token::Transfer {
-                    from: ctx.accounts.vendor_vault.to_account_info(),
-                    to: ctx.accounts.to.to_account_info(),
-                    authority: ctx.accounts.vendor_signer.to_account_info(),
-                },
-                vendor_imprint,
-            );
-            if let Ok(()) = token::transfer(cpi_ctx, reward_amount) {} else {
-                return Err(ErrorCode::TransferTokenFail.into());
-            };
-        }
-
-        // Update member as having processed the reward.
-        let member = &mut ctx.accounts.member;
-        member.rewards_cursor = ctx.accounts.vendor.current_reward_position + 1;
+        member.reward_debt = balances.spt.amount * state.acc_token_per_share as u64;
 
         Ok(())
     }
@@ -278,6 +221,44 @@ mod staking {
         }
         if *ctx.accounts.balances.vault_pw.to_account_info().key != ctx.accounts.member.balances.vault_pw {
             return Err(ErrorCode::InvalidVault.into());
+        }
+
+        {
+            let state = &mut ctx.accounts.staking_pool;
+            update_pool(state, ctx.accounts.clock.clone(), ctx.accounts.balances.spt.amount.clone()).unwrap();
+
+            let member = &mut ctx.accounts.member;
+            let balances = ctx.accounts.balances.clone();
+            let pending_reward = balances.spt.amount * state.acc_token_per_share as u64 - member.reward_debt;
+            msg!("pending reward: {}", pending_reward);
+            /* Deposit from depositor account to stake vault
+            {
+                 msg!("Transfer pending reward from reward to vault pending");
+                 let seeds = &[
+                     ctx.accounts.staking_pool.to_account_info().key.as_ref(),
+                     ctx.accounts.member.to_account_info().key.as_ref(),
+                     &[ctx.accounts.member.nonce],
+                 ];
+                 let member_imprint = &[&seeds[..]];
+                 let cpi_ctx = CpiContext::new_with_signer(
+                     ctx.accounts.token_program.clone(),
+                     token::Transfer {
+                         from: ctx.accounts.depositor.to_account_info(),
+                         to: ctx.accounts.balances.vault_stake.to_account_info(),
+                        authority: ctx.accounts.depositor_authority.to_account_info(),
+                     },
+                    member_imprint,
+               );
+                 // // Convert from stake-token units to mint-token units.
+                 // let token_amount = amount
+                 //     .checked_mul(ctx.accounts.staking_pool.stake_rate)
+                //     .unwrap();
+               if let Ok(()) = token::transfer(cpi_ctx, amount) {} else {
+                     return Err(ErrorCode::TransferTokenFail.into());
+                 };
+            }
+            */
+            member.reward_debt = balances.spt.amount * state.acc_token_per_share as u64;
         }
 
         let spt_amount = spt_amount.unwrap();
@@ -305,7 +286,7 @@ mod staking {
             }
         }
 
-        // Transfer token from pending withdraw vault to token account
+        // Transfer token from stake vault to token account
         {
             let cpi_ctx = CpiContext::new_with_signer(
                 ctx.accounts.token_program.clone(),
@@ -321,11 +302,6 @@ mod staking {
             }
         }
 
-        msg!("Update last stake time");
-        // Update stake timestamp.
-        let member = &mut ctx.accounts.member;
-        member.last_stake_ts = ctx.accounts.clock.unix_timestamp;
-
         Ok(())
     }
 }
@@ -334,19 +310,13 @@ mod staking {
 pub struct InitializeStakingPoolRequest<'info> {
     #[account(signer)]
     authority: AccountInfo<'info>,
-    #[account(init)]
-    vendor: ProgramAccount<'info, RewardVendor>,
-    #[account(mut)]
-    vendor_vault: CpiAccount<'info, TokenAccount>,
-    #[account(init)]
-    reward_event_q: ProgramAccount<'info, RewardQueue>,
     #[account("pool_mint.decimals == 0")]
     pool_mint: CpiAccount<'info, Mint>,
     rent: Sysvar<'info, Rent>,
 }
 
 impl<'info> InitializeStakingPoolRequest<'info> {
-    fn validate(ctx: &Context<InitializeStakingPoolRequest<'info>>, state_pub_key: Pubkey, staking_pool_nonce: u8, vendor_nonce: u8, mint: Pubkey) -> Result<(), ProgramError> {
+    fn validate(ctx: &Context<InitializeStakingPoolRequest<'info>>, state_pub_key: Pubkey, staking_pool_nonce: u8) -> Result<(), ProgramError> {
         let staking_pool_imprint = Pubkey::create_program_address(
             &[
                 state_pub_key.as_ref(),
@@ -359,23 +329,6 @@ impl<'info> InitializeStakingPoolRequest<'info> {
         }
 
         assert_eq!(ctx.accounts.pool_mint.supply, 0);
-
-        let vendor_imprint = Pubkey::create_program_address(
-            &[
-                state_pub_key.as_ref(),
-                ctx.accounts.vendor.to_account_info().key.as_ref(),
-                &[vendor_nonce],
-            ],
-            ctx.program_id,
-        ).map_err(|_| ErrorCode::InvalidNonce)?;
-        if ctx.accounts.vendor_vault.owner != vendor_imprint {
-            return Err(ErrorCode::InvalidVaultOwner.into());
-        }
-
-        if ctx.accounts.vendor_vault.mint != mint {
-            return Err(ErrorCode::MintNotMatch.into());
-        }
-
         Ok(())
     }
 }
@@ -404,15 +357,13 @@ pub struct CreateMemberRequest<'info> {
 }
 
 #[derive(Accounts)]
-pub struct StakeRequest<'info> {
+pub struct DepositRequest<'info> {
+    #[account(mut)]
     staking_pool: ProgramState<'info, StakingPool>,
     #[account(mut)]
     pool_mint: CpiAccount<'info, Mint>,
     #[account(seeds = [staking_pool.key.as_ref(), & [staking_pool.nonce]])]
     imprint: AccountInfo<'info>,
-
-    #[account(mut)]
-    vendor: ProgramAccount<'info, RewardVendor>,
 
     /// Member relate account
     #[account(has_one = authority)]
@@ -447,121 +398,9 @@ pub struct StakeRequest<'info> {
     rent: Sysvar<'info, Rent>,
 }
 
-impl<'info> StakeRequest<'info> {
-    fn validate(ctx: &Context<StakeRequest<'info>>) -> Result<(), ProgramError> {
-        let staking_pool_imprint = Pubkey::create_program_address(
-            &[
-                ctx.accounts.staking_pool.key.as_ref(),
-                &[ctx.accounts.staking_pool.nonce],
-            ],
-            ctx.program_id,
-        )
-            .map_err(|_| ErrorCode::InvalidNonce)?;
-
-        if ctx.accounts.pool_mint.mint_authority != COption::Some(staking_pool_imprint) {
-            return Err(ErrorCode::InvalidPoolMintAuthority.into());
-        }
-        msg!("Validate success");
-        Ok(())
-    }
-}
-
-#[derive(Accounts)]
-pub struct DropRewardRequest<'info> {
-    // Staking instance.
-    #[account(mut)]
-    reward_event_queue: ProgramAccount<'info, RewardQueue>,
-
-    // Vendor.
-    #[account(mut)]
-    vendor: ProgramAccount<'info, RewardVendor>,
-    #[account(mut)]
-    vendor_vault: CpiAccount<'info, TokenAccount>,
-
-    // Depositor.
-    #[account(mut)]
-    depositor: AccountInfo<'info>,
-    #[account(signer)]
-    depositor_authority: AccountInfo<'info>,
-
-    // Misc.
-    #[account("token_program.key == &token::ID")]
-    token_program: AccountInfo<'info>,
-    clock: Sysvar<'info, Clock>,
-    rent: Sysvar<'info, Rent>,
-}
-
-impl<'info> DropRewardRequest<'info> {
-    fn validate(_ctx: &Context<DropRewardRequest<'info>>) -> Result<(), ProgramError> {
-        // let staking_pool_imprint = Pubkey::create_program_address(
-        //     &[
-        //         ctx.accounts.staking_pool.key.as_ref(),
-        //         &[ctx.accounts.staking_pool.nonce],
-        //     ],
-        //     ctx.program_id,
-        // )
-        //     .map_err(|_| ErrorCode::InvalidNonce)?;
-        //
-        // if ctx.accounts.pool_mint.mint_authority != COption::Some(staking_pool_imprint) {
-        //     return Err(ErrorCode::InvalidPoolMintAuthority.into());
-        // }
-        msg!("Validate success");
-        Ok(())
-    }
-}
-
-#[derive(Accounts)]
-pub struct ClaimRewardRequest<'info> {
-    // Stake instance.
-    staking_pool: ProgramState<'info, StakingPool>,
-
-    // Member.
-    /// Member relate account
-    #[account(mut, has_one = authority)]
-    member: ProgramAccount<'info, Member>,
-    #[account(mut, signer)]
-    authority: AccountInfo<'info>,
-    #[account(
-    "&balances.spt.owner == member_imprint.key",
-    "balances.spt.mint == staking_pool.pool_mint",
-    "balances.vault_stake.mint == staking_pool.mint",
-    "balances.vault_pw.mint == staking_pool.mint"
-    )]
-    balances: BalanceSandboxAccounts<'info>,
-    #[account(seeds = [
-    staking_pool.to_account_info().key.as_ref(),
-    member.to_account_info().key.as_ref(),
-    & [member.nonce]
-    ]
-    )]
-    member_imprint: AccountInfo<'info>,
-
-    // Vendor.
-    #[account(mut)]
-    vendor: ProgramAccount<'info, RewardVendor>,
-    #[account(mut)]
-    vendor_vault: CpiAccount<'info, TokenAccount>,
-    #[account(
-    seeds = [
-    staking_pool.to_account_info().key.as_ref(),
-    vendor.to_account_info().key.as_ref(),
-    &[vendor.nonce],
-    ]
-    )]
-    vendor_signer: AccountInfo<'info>,
-
-    // Account to send reward to.
-    #[account(mut)]
-    to: AccountInfo<'info>,
-
-    // Misc.
-    #[account("token_program.key == &token::ID")]
-    token_program: AccountInfo<'info>,
-    clock: Sysvar<'info, Clock>,
-}
-
 #[derive(Accounts)]
 pub struct WithDrawRequest<'info> {
+    #[account(mut)]
     staking_pool: ProgramState<'info, StakingPool>,
     #[account(mut)]
     pool_mint: CpiAccount<'info, Mint>,
@@ -599,22 +438,6 @@ pub struct WithDrawRequest<'info> {
     rent: Sysvar<'info, Rent>,
 }
 
-#[account]
-pub struct RewardVendor {
-    pub vault: Pubkey,
-    pub mint: Pubkey,
-    pub nonce: u8,
-    pub pool_token_supply: Vec<u64>,
-    pub current_reward_position: i32,
-    pub start_ts: i64,
-    pub expiry_ts: i64,
-    pub expiry_receiver: Pubkey,
-    pub from: Pubkey,
-    pub total: Vec<u64>,
-    pub expired: bool,
-    pub activated: bool,
-}
-
 #[associated]
 pub struct Member {
     /// The effective owner of the Member account.
@@ -623,12 +446,8 @@ pub struct Member {
     pub metadata: Pubkey,
     /// Sets of balances owned by the Member.
     pub balances: BalanceSandbox,
-    /// Next position in the rewards event queue to process.
-    pub rewards_cursor: i32,
-    /// The clock timestamp of the last time this account staked or switched
-    /// entities. Used as a proof to reward vendors that the Member account
-    /// was staked at a given point in time.
-    pub last_stake_ts: i64,
+    ///
+    pub reward_debt: u64,
     /// Signer nonce.
     pub nonce: u8,
 }
@@ -674,60 +493,30 @@ impl<'info> From<&BalanceSandboxAccounts<'info>> for BalanceSandbox {
     }
 }
 
-#[account]
-pub struct RewardQueue {
-    // Invariant: index is position of the next available slot.
-    head: u32,
-    // Invariant: index is position of the first (oldest) taken slot.
-    // Invariant: head == tail => queue is initialized.
-    // Invariant: index_of(head + 1) == index_of(tail) => queue is full.
-    tail: u32,
-    // Although a vec is used, the size is immutable.
-    events: Vec<RewardEvent>,
+pub fn update_pool<'info>(state: &mut ProgramState<'info, StakingPool>, clock: Sysvar<'info, Clock>, member_amount: u64) -> Result<(), ProgramError>{
+    if clock.unix_timestamp <= state.last_reward_block {
+        return Err(ErrorCode::InvalidDepositor.into());
+    }
+
+    let staked_token_supply = member_amount;
+    if staked_token_supply == 0 {
+        state.last_reward_block = clock.unix_timestamp;
+        return Err(ErrorCode::InvalidDepositor.into());
+    }
+
+    let multiplier = get_multiplier(state.last_reward_block, clock.unix_timestamp, state.bonus_end_block.clone());
+    let cake_reward = multiplier.checked_mul(state.reward_per_block).unwrap();
+    state.acc_token_per_share += cake_reward / staked_token_supply as i64;
+    state.last_reward_block = clock.unix_timestamp;
+
+    Ok(())
 }
-
-impl RewardQueue {
-    pub fn append(&mut self, event: RewardEvent) -> Result<u32, ProgramError> {
-        let cursor = self.head;
-
-        // Insert into next available slot.
-        let h_idx = self.index_of(self.head);
-        self.events[h_idx] = event;
-
-        // Update head and tail counters.
-        let is_full = self.index_of(self.head + 1) == self.index_of(self.tail);
-        if is_full {
-            self.tail += 1;
-        }
-        self.head += 1;
-
-        Ok(cursor)
-    }
-
-    pub fn index_of(&self, counter: u32) -> usize {
-        counter as usize % self.capacity()
-    }
-
-    pub fn capacity(&self) -> usize {
-        self.events.len()
-    }
-
-    pub fn get(&self, cursor: u32) -> &RewardEvent {
-        &self.events[cursor as usize % self.capacity()]
-    }
-
-    pub fn head(&self) -> u32 {
-        self.head
-    }
-
-    pub fn tail(&self) -> u32 {
-        self.tail
+pub fn get_multiplier(from: i64, to: i64, bonus_end_block: i64) -> i64 {
+    return if to <= bonus_end_block {
+        to - from
+    } else if from >= bonus_end_block {
+        0
+    } else {
+        bonus_end_block - from
     }
 }
-
-#[derive(Default, Clone, Copy, Debug, AnchorSerialize, AnchorDeserialize)]
-pub struct RewardEvent {
-    vendor: Pubkey,
-    ts: i64,
-}
-

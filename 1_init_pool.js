@@ -31,16 +31,10 @@ async function main() {
         const rewardQ = new anchor.web3.Account();
         const stateRate = new anchor.BN(10);
         const withdrawTimeLock = new anchor.BN(10);
+        const rewardQLen = 170;
         let state_pubKey = await program.state.address();
         const [staking_pool_imprint, state_imprint_nonce] = await anchor.web3.PublicKey.findProgramAddress(
             [state_pubKey.toBuffer()],
-            program.programId
-        );
-
-        const vendor = new anchor.web3.Account();
-        const vendorVault = new anchor.web3.Account();
-        const [vendor_imprint, vendor_imprint_nonce] = await anchor.web3.PublicKey.findProgramAddress(
-            [state_pubKey.toBuffer(), vendor.publicKey.toBuffer()],
             program.programId
         );
 
@@ -50,36 +44,25 @@ async function main() {
         let tx = await program.state.rpc.new(
             mint,
             state_pubKey,
-            vendor.publicKey,
             state_imprint_nonce,
-            vendor_imprint_nonce,
             stateRate,
             withdrawTimeLock,
+            rewardQLen,
             {
                 accounts: {
                     authority: provider.wallet.publicKey,
-                    vendor: vendor.publicKey,
-                    vendorVault: vendorVault.publicKey,
                     rewardEventQ: rewardQ.publicKey,
                     poolMint,
                     rent: anchor.web3.SYSVAR_RENT_PUBKEY
                 },
-                signers: [rewardQ, vendorVault, vendor],
+                signers: [rewardQ],
                 instructions: [
-                    await program.account.rewardQueue.createInstruction(rewardQ, 8250),
-                    ...(await serumCmn.createTokenAccountInstrs(
-                        provider,
-                        vendorVault.publicKey,
-                        mint,
-                        vendor_imprint
-                    )),
-                    await program.account.rewardVendor.createInstruction(vendor),
+                    await program.account.rewardQueue.createInstruction(rewardQ, 8250)
                 ]
             }
         );
         console.log("tx id: ", tx);
         console.log("poolMint.authority: ", staking_pool_imprint.toString());
-        console.log("vendorVault.authority: ", vendor_imprint.toString())
     } catch (e) {
         console.log("Pool has been initialized");
     }

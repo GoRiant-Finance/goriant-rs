@@ -27,7 +27,6 @@ async function main() {
         program.programId
     );
 
-    // let balances = memberAccount.balances;
     const [mainTx, balances] = await utils.createBalanceSandbox(provider, state, memberImprint);
     let txSigns = await provider.send(mainTx.tx, mainTx.signers);
 
