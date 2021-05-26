@@ -17,6 +17,8 @@ use staking::StakingPool;
 mod staking {
     use super::*;
 
+    const PRECISION: u64 = 1000000000;
+
     #[state]
     pub struct StakingPool {
         /// Address of pool
@@ -33,6 +35,7 @@ mod staking {
         pub mint: Pubkey,
         /// Staking pool token mint.
         pub pool_mint: Pubkey,
+        pub pool_mint_decimal: u8,
         /// The amount of tokens (not decimal) that must be staked to get a single
         /// staking pool token.
         pub stake_rate: u64,
@@ -85,6 +88,7 @@ mod staking {
                 start_block,
                 last_reward_block: start_block,
                 reward_per_block,
+                pool_mint_decimal: ctx.accounts.pool_mint.decimals
             };
 
             msg!("Initialize Staking pool");
