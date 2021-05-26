@@ -5,8 +5,8 @@ const utils = require("./utils");
 const config = utils.readConfig();
 const program_id = new anchor.web3.PublicKey(config.programId);
 
-// const provider = anchor.Provider.local('https://devnet.solana.com');
-const provider = anchor.Provider.local();
+const provider = anchor.Provider.local('https://devnet.solana.com');
+// const provider = anchor.Provider.local();
 anchor.setProvider(provider);
 
 const idl = JSON.parse(fs.readFileSync('./target/idl/staking.json', 'utf8'));

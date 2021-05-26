@@ -12,6 +12,8 @@ async function log_state(state) {
   console.log("state.withdrawTimeLock: ", state.withdrawTimeLock.toString())
   console.log("state.mint: ", state.mint.toString())
   console.log("state.poolMint: ", state.poolMint.toString())
+  console.log("state.poolMintDecimal", state.poolMintDecimal.toString())
+  console.log("state.precisionFactor: ", state.precisionFactor.toString())
   console.log("state.stakeRate: ", state.stakeRate.toString())
   console.log("state.accTokenPerShare: ", state.accTokenPerShare.toString())
   console.log("state.startBlock: ", state.startBlock.toString())

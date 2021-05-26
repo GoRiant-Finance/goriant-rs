@@ -6,8 +6,8 @@ const utils = require("./utils");
 const config = utils.readConfig();
 const program_id = new anchor.web3.PublicKey(config.programId);
 
-// const provider = anchor.Provider.local('https://devnet.solana.com');
-const provider = anchor.Provider.local();
+const provider = anchor.Provider.local('https://devnet.solana.com');
+// const provider = anchor.Provider.local();
 anchor.setProvider(provider);
 
 const idl = JSON.parse(fs.readFileSync('./target/idl/staking.json', 'utf8'));
@@ -35,7 +35,7 @@ async function main() {
         provider.wallet.publicKey
     );
     console.log("token account: ", token_account.toString(), " - amount: ", await utils.tokenBalance(token_account));
-    let withdraw_amount = new anchor.BN(10);
+    let withdraw_amount = new anchor.BN(10000);
     try {
         let tx = await program.rpc.withdraw(
             withdraw_amount,
