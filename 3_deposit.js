@@ -1,21 +1,16 @@
 const anchor = require("@project-serum/anchor");
 const TokenInstructions = require("@project-serum/serum").TokenInstructions;
-const fs = require('fs');
 const utils = require("./utils");
 const config = utils.readConfig();
+const provider = utils.provider;
 const program_id = new anchor.web3.PublicKey(config.programId);
-
-const provider = anchor.Provider.local('https://devnet.solana.com');
-// const provider = anchor.Provider.local();
+const idl = utils.readIdl();
 anchor.setProvider(provider);
-
-const idl = JSON.parse(fs.readFileSync('./target/idl/staking.json', 'utf8'));
-
 let program = new anchor.Program(idl, program_id);
 
-
 async function main() {
-    const god = new anchor.web3.PublicKey(config.vault);
+    const tokenInLamport = 1000000000;
+    const god = new anchor.web3.PublicKey("7MUT98i9VU3JtZbsjnViHGafQR6qph9UQmxGngMMSk1X");
     let state_pubKey = await program.state.address();
     let state = await program.state();
     let member = await program.account.member.associatedAddress(provider.wallet.publicKey);
@@ -30,7 +25,7 @@ async function main() {
         program.programId
     );
 
-    let deposit_amount = new anchor.BN(10000);
+    let deposit_amount = new anchor.BN(500 * tokenInLamport);
     try {
         let tx = await program.rpc.deposit(
             deposit_amount,
@@ -39,6 +34,7 @@ async function main() {
                     stakingPool: state_pubKey,
                     poolMint: state.poolMint,
                     imprint: state.imprint,
+                    rewardVault: state.rewardVault,
                     member: member,
                     authority: provider.wallet.publicKey,
                     balances: balances,
@@ -48,7 +44,8 @@ async function main() {
                     tokenProgram: TokenInstructions.TOKEN_PROGRAM_ID,
                     clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
                     rent: anchor.web3.SYSVAR_RENT_PUBKEY
-                }
+                },
+                signers: [state.imprint]
             }
         );
         console.log("tx: ", tx);

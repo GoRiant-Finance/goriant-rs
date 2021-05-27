@@ -17,8 +17,6 @@ use staking::StakingPool;
 mod staking {
     use super::*;
 
-    const PRECISION: u64 = 1000000000;
-
     #[state]
     pub struct StakingPool {
         /// Address of pool
@@ -40,6 +38,7 @@ mod staking {
         /// The amount of tokens (not decimal) that must be staked to get a single
         /// staking pool token.
         pub stake_rate: u64,
+        pub reward_vault: Pubkey,
 
         /// Reward Info
         /// Accrued token per share
@@ -75,13 +74,41 @@ mod staking {
                 ctx.program_id,
             ).map_err(|_| ErrorCode::InvalidNonce)?;
 
-            let decimals_token = ctx.accounts.pool_mint.decimals;
-
-            if decimals_token >= 15 {
+            if ctx.accounts.pool_mint.decimals >= 10 {
                 return Err(ErrorCode::CalculateError.into());
             }
 
-            let precision_factor = u64::pow(10, (15 - decimals_token) as u32);
+            let precision_factor = u64::pow(10, ctx.accounts.pool_mint.decimals as u32);
+
+            if bonus_end_block < start_block {
+                return Err(ErrorCode::InvalidExpiry.into());
+            }
+
+            let reward_unit;
+            if reward_per_block > 0 && bonus_end_block > start_block {
+                let total_time = bonus_end_block.checked_sub(start_block).unwrap() as u64;
+                let total_reward = reward_per_block.checked_mul(total_time).unwrap();
+
+                {
+                    msg!("Transfer token from depositor to reward vault");
+                    let cpi_ctx = CpiContext::new(
+                        ctx.accounts.token_program.clone(),
+                        token::Transfer {
+                            from: ctx.accounts.reward_deposit.to_account_info(),
+                            to: ctx.accounts.reward_vault.to_account_info(),
+                            authority: ctx.accounts.reward_authority.to_account_info(),
+                        },
+                    );
+                    if let Ok(()) = token::transfer(cpi_ctx, total_reward) {} else {
+                        return Err(ErrorCode::TransferTokenFail.into());
+                    };
+                }
+
+                reward_unit = reward_per_block;
+            } else {
+                reward_unit = 0;
+            }
+
             let staking_pool = Self {
                 key: state_pub_key,
                 authority: *ctx.accounts.authority.key,
@@ -95,12 +122,12 @@ mod staking {
                 bonus_end_block,
                 start_block,
                 last_reward_block: start_block,
-                reward_per_block,
+                reward_per_block: reward_unit,
                 pool_mint_decimal: ctx.accounts.pool_mint.decimals,
                 precision_factor,
+                reward_vault: *ctx.accounts.reward_vault.to_account_info().key,
             };
 
-            msg!("Initialize Staking pool");
             Ok(staking_pool)
         }
 
@@ -166,37 +193,27 @@ mod staking {
         {
             let balances = ctx.accounts.balances.clone();
             if balances.spt.amount > 0 {
-                let pending_reward = balances.spt.amount
-                                             .checked_mul(state.acc_token_per_share).unwrap()
-                                             .checked_div(state.precision_factor).unwrap()
-                                             .checked_sub(member.reward_debt).unwrap();
+                let pending_reward = (balances.spt.amount as u128)
+                    .checked_mul(state.acc_token_per_share as u128).unwrap()
+                    .checked_div(state.precision_factor as u128).unwrap()
+                    .checked_sub(member.reward_debt as u128).unwrap() as u64;
                 msg!("pending reward: {}", pending_reward);
                 // Deposit from depositor account to stake vault
-                // {
-                //     msg!("Transfer pending reward from reward to vault pending");
-                //     let seeds = &[
-                //         ctx.accounts.staking_pool.to_account_info().key.as_ref(),
-                //         ctx.accounts.member.to_account_info().key.as_ref(),
-                //         &[ctx.accounts.member.nonce],
-                //     ];
-                //     let member_imprint = &[&seeds[..]];
-                //     let cpi_ctx = CpiContext::new_with_signer(
-                //         ctx.accounts.token_program.clone(),
-                //         token::Transfer {
-                //             from: ctx.accounts.depositor.to_account_info(),
-                //             to: ctx.accounts.balances.vault_stake.to_account_info(),
-                //             authority: ctx.accounts.depositor_authority.to_account_info(),
-                //         },
-                //         member_imprint,
-                //     );
-                //     // // Convert from stake-token units to mint-token units.
-                //     // let token_amount = amount
-                //     //     .checked_mul(ctx.accounts.staking_pool.stake_rate)
-                //     //     .unwrap();
-                //     if let Ok(()) = token::transfer(cpi_ctx, amount) {} else {
-                //         return Err(ErrorCode::TransferTokenFail.into());
-                //     };
-                // }
+                if pending_reward > 0
+                {
+                    msg!("Transfer pending reward from reward to vault pending");
+                    let cpi_ctx = CpiContext::new(
+                        ctx.accounts.token_program.clone(),
+                        token::Transfer {
+                            from: ctx.accounts.reward_vault.to_account_info(),
+                            to: ctx.accounts.balances.vault_pw.to_account_info(),
+                            authority: ctx.accounts.imprint.to_account_info(),
+                        },
+                    );
+                    if let Ok(()) = token::transfer(cpi_ctx, pending_reward) {} else {
+                        return Err(ErrorCode::TransferTokenFail.into());
+                    };
+                }
             }
         }
 
@@ -254,9 +271,9 @@ mod staking {
         }
         let spt = ctx.accounts.balances.spt.reload().unwrap().amount;
         msg!("current spt amount: {}", spt);
-        member.reward_debt = spt
-            .checked_mul(state.acc_token_per_share).unwrap()
-            .checked_div(state.precision_factor).unwrap();
+        member.reward_debt = (spt as u128)
+            .checked_mul(state.acc_token_per_share as u128).unwrap()
+            .checked_div(state.precision_factor as u128).unwrap() as u64;
 
         Ok(())
     }
@@ -328,43 +345,34 @@ mod staking {
             msg!("Update pool success");
             let member = &mut ctx.accounts.member;
             let balances = ctx.accounts.balances.clone();
-            let pending_reward = balances.spt.amount
-                                         .checked_mul(state.acc_token_per_share).unwrap()
-                                         .checked_div(state.precision_factor).unwrap()
-                                         .checked_sub(member.reward_debt).unwrap();
+            let pending_reward = (balances.spt.amount as u128)
+                .checked_mul(state.acc_token_per_share as u128).unwrap()
+                .checked_div(state.precision_factor as u128).unwrap()
+                .checked_sub(member.reward_debt as u128).unwrap() as u64;
             msg!("pending reward: {}", pending_reward);
-            /* Deposit from depositor account to stake vault
+            // Deposit from depositor account to stake vault
+            if pending_reward > 0
             {
-                 msg!("Transfer pending reward from reward to vault pending");
-                 let seeds = &[
-                     ctx.accounts.staking_pool.to_account_info().key.as_ref(),
-                     ctx.accounts.member.to_account_info().key.as_ref(),
-                     &[ctx.accounts.member.nonce],
-                 ];
-                 let member_imprint = &[&seeds[..]];
-                 let cpi_ctx = CpiContext::new_with_signer(
-                     ctx.accounts.token_program.clone(),
-                     token::Transfer {
-                         from: ctx.accounts.depositor.to_account_info(),
-                         to: ctx.accounts.balances.vault_stake.to_account_info(),
-                        authority: ctx.accounts.depositor_authority.to_account_info(),
-                     },
-                    member_imprint,
-               );
-                 // // Convert from stake-token units to mint-token units.
-                 // let token_amount = amount
-                 //     .checked_mul(ctx.accounts.staking_pool.stake_rate)
-                //     .unwrap();
-               if let Ok(()) = token::transfer(cpi_ctx, amount) {} else {
-                     return Err(ErrorCode::TransferTokenFail.into());
-                 };
+                msg!("Transfer pending reward from reward to vault pending");
+                let cpi_ctx = CpiContext::new(
+                    ctx.accounts.token_program.clone(),
+                    token::Transfer {
+                        from: ctx.accounts.reward_vault.to_account_info(),
+                        to: ctx.accounts.balances.vault_pw.to_account_info(),
+                        authority: ctx.accounts.imprint.to_account_info(),
+                    },
+                );
+                if let Ok(()) = token::transfer(cpi_ctx, pending_reward) {} else {
+                    return Err(ErrorCode::TransferTokenFail.into());
+                };
             }
-            */
-            let spt = balances.spt.reload().unwrap().amount;
+
+            let spt = ctx.accounts.balances.spt.amount as u128;
+
             msg!("current spt amount: {}", spt);
             member.reward_debt = spt
-                .checked_mul(state.acc_token_per_share).unwrap()
-                .checked_div(state.precision_factor).unwrap();
+                .checked_mul(state.acc_token_per_share as u128).unwrap()
+                .checked_div(state.precision_factor as u128).unwrap() as u64;
         }
 
         Ok(())
@@ -378,11 +386,13 @@ mod staking {
         let amount = ctx.accounts.balances.spt.amount.clone();
         let pending_reward = if ctx.accounts.clock.unix_timestamp > state.last_reward_block && staked_token_supply != 0 {
             let multiplier = get_multiplier(state.last_reward_block, ctx.accounts.clock.unix_timestamp, state.bonus_end_block);
-            let cake_reward = multiplier * state.reward_per_block;
-            let adjusted_token_per_share = state.acc_token_per_share + cake_reward * state.precision_factor / staked_token_supply;
-            amount * adjusted_token_per_share / state.precision_factor - member_reward_debt
+            let cake_reward = multiplier.checked_mul(state.reward_per_block).unwrap();
+            let adjusted_token_per_share = state.acc_token_per_share as u128 + (cake_reward as u128)
+                .checked_mul(state.precision_factor as u128).unwrap()
+                .checked_div(staked_token_supply as u128).unwrap();
+            amount as u128 * adjusted_token_per_share / state.precision_factor as u128 - member_reward_debt as u128
         } else {
-            amount * state.acc_token_per_share / state.precision_factor - member_reward_debt
+            amount as u128 * state.acc_token_per_share as u128 / state.precision_factor as u128 - member_reward_debt as u128
         };
         msg!("Pending reward: {}", pending_reward);
         Ok(())
@@ -393,8 +403,18 @@ mod staking {
 pub struct InitializeStakingPoolRequest<'info> {
     #[account(signer)]
     authority: AccountInfo<'info>,
-    #[account("pool_mint.decimals == 0")]
+    #[account()]
     pool_mint: CpiAccount<'info, Mint>,
+    #[account(mut)]
+    reward_vault: CpiAccount<'info, TokenAccount>,
+
+    #[account(mut)]
+    reward_deposit: AccountInfo<'info>,
+    #[account(signer)]
+    reward_authority: AccountInfo<'info>,
+
+    #[account("token_program.key == &token::ID")]
+    token_program: AccountInfo<'info>,
     rent: Sysvar<'info, Rent>,
 }
 
@@ -445,8 +465,10 @@ pub struct DepositRequest<'info> {
     staking_pool: ProgramState<'info, StakingPool>,
     #[account(mut)]
     pool_mint: CpiAccount<'info, Mint>,
-    #[account(seeds = [staking_pool.key.as_ref(), & [staking_pool.nonce]])]
+    #[account(signer, seeds = [staking_pool.key.as_ref(), & [staking_pool.nonce]])]
     imprint: AccountInfo<'info>,
+    #[account(mut)]
+    reward_vault: CpiAccount<'info, TokenAccount>,
 
     /// Member relate account
     #[account(has_one = authority)]
@@ -485,8 +507,12 @@ pub struct DepositRequest<'info> {
 pub struct WithDrawRequest<'info> {
     #[account(mut)]
     staking_pool: ProgramState<'info, StakingPool>,
+    #[account(signer, seeds = [staking_pool.key.as_ref(), & [staking_pool.nonce]])]
+    imprint: AccountInfo<'info>,
     #[account(mut)]
     pool_mint: CpiAccount<'info, Mint>,
+    #[account(mut)]
+    reward_vault: CpiAccount<'info, TokenAccount>,
 
     /// Member relate account
     #[account(has_one = authority)]
@@ -609,17 +635,19 @@ pub fn update_pool<'info>(state: &mut ProgramState<'info, StakingPool>, clock: S
     let staked_token_supply = total_staked;
     msg!("Staked token supply: {}", staked_token_supply);
     if staked_token_supply == 0 {
-        msg!("Staked token supply equal 0");
         state.last_reward_block = clock.unix_timestamp.clone();
         return Ok(());
     }
     let precision_factor = state.precision_factor;
     let multiplier = get_multiplier(state.last_reward_block, clock.unix_timestamp, state.bonus_end_block.clone());
     msg!("Multiplier: {}", multiplier);
-    let token_reward = multiplier.checked_mul(state.reward_per_block).unwrap();
+    let token_reward = multiplier.checked_mul(state.reward_per_block).unwrap() as u128;
     msg!("Token reward: {}", token_reward);
-    state.acc_token_per_share += token_reward.checked_mul(precision_factor).unwrap()
-                                             .checked_div(staked_token_supply).unwrap_or(0);
+    let next_acc_token_per_share =
+        token_reward
+            .checked_mul(precision_factor as u128).unwrap()
+            .checked_div(staked_token_supply as u128).unwrap_or(0) as u64;
+    state.acc_token_per_share = staked_token_supply.checked_add(next_acc_token_per_share).unwrap();
     state.last_reward_block = clock.unix_timestamp;
 
     Ok(())

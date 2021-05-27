@@ -2,8 +2,8 @@ const anchor = require("@project-serum/anchor");
 const serumCmn = require("@project-serum/common");
 const fs = require('fs');
 
-// const provider = anchor.Provider.local('https://api.devnet.solana.com');
-const provider = anchor.Provider.local();
+const provider = anchor.Provider.local('https://api.devnet.solana.com');
+// const provider = anchor.Provider.local();
 async function log_state(state) {
   console.log("state.key: ", state.key.toString());
   console.log("state.authority: ", state.authority.toString());
@@ -20,6 +20,7 @@ async function log_state(state) {
   console.log("state.bonusEndBlock: ", state.bonusEndBlock.toString())
   console.log("state.lastRewardBlock: ", state.lastRewardBlock.toString())
   console.log("state.rewardPerBlock: ", state.rewardPerBlock.toString())
+  console.log("state.rewardVault: ", state.rewardVault.toString(), " - amount: ", await tokenBalance(state.rewardVault))
 }
 async function createBalanceSandbox(provider, r, registrySigner) {
   const spt = new anchor.web3.Account();
@@ -126,8 +127,13 @@ function writeConfig(c) {
 function readConfig() {
   return JSON.parse(fs.readFileSync('./config.json', 'utf8'));
 }
+function readIdl() {
+  return JSON.parse(fs.readFileSync('./target/idl/staking.json', 'utf8'));
 
+}
 module.exports = {
+  provider,
+  readIdl,
   tokenBalance,
   sleep,
   createBalanceSandbox,

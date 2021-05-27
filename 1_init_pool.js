@@ -1,48 +1,47 @@
 const anchor = require("@project-serum/anchor");
+const TokenInstructions = require("@project-serum/serum").TokenInstructions;
 const serumCmn = require("@project-serum/common");
-const fs = require('fs');
 const utils = require("./utils");
 const config = utils.readConfig();
+const provider = utils.provider;
 const program_id = new anchor.web3.PublicKey(config.programId);
-
-const provider = anchor.Provider.local('https://devnet.solana.com');
-// const provider = anchor.Provider.local();
 anchor.setProvider(provider);
-
-
-const idl = JSON.parse(fs.readFileSync('./target/idl/staking.json', 'utf8'));
-
+const idl = utils.readIdl();
 let program = new anchor.Program(idl, program_id);
 
 
 async function main() {
-    const [mint, god] = await serumCmn.createMintAndVault(
-        provider,
-        new anchor.BN(1000000)
-    );
+    // const [mint, god] = await serumCmn.createMintAndVault(
+    //     provider,
+    //     new anchor.BN(1000000)
+    // );
 
-    config.token = mint.toBase58();
-    config.vault = god.toBase58();
-    utils.writeConfig(config);
-
-    console.log("mint: ", mint.toString());
-    console.log("god: ", god.toString());
+    // config.token = mint.toBase58();
+    // config.vault = god.toBase58();
+    // utils.writeConfig(config);
+    const depositor = new anchor.web3.PublicKey("7MUT98i9VU3JtZbsjnViHGafQR6qph9UQmxGngMMSk1X");
+    const minuteInSecond = 60;
+    const tokenInLamport = 1000000000;
+    const mint = new anchor.web3.PublicKey(config.token);
     try {
         const stateRate = new anchor.BN(1);
-        const withdrawTimeLock = new anchor.BN(10);
-        const start_block = new anchor.BN(new Date().getTime() / 1000);
-        const end_block = new anchor.BN(new Date().getTime() / 1000 + 1000);
-        const reward_per_block = new anchor.BN(1000);
+        const withdrawTimeLock = new anchor.BN(0);
+        // reward start after 30 minute
+        const start_block = new anchor.BN(new Date().getTime() / 1000 + 0.5 * minuteInSecond);
+        // reward end after begin 120 minute
+        const end_block = new anchor.BN(new Date().getTime() / 1000 + 121 * minuteInSecond);
+        const reward_per_block = new anchor.BN(5 * tokenInLamport);
         let state_pubKey = await program.state.address();
+        const rewardVault = new anchor.web3.Keypair();
+
         const [staking_pool_imprint, state_imprint_nonce] = await anchor.web3.PublicKey.findProgramAddress(
             [state_pubKey.toBuffer()],
             program.programId
         );
 
         /// pool mint with state authority
-        const poolMint = await serumCmn.createMint(provider, staking_pool_imprint);
+        const poolMint = await serumCmn.createMint(provider, staking_pool_imprint, 9);
 
-        console.log("t");
         let tx = await program.state.rpc.new(
             mint,
             state_pubKey,
@@ -56,8 +55,21 @@ async function main() {
                 accounts: {
                     authority: provider.wallet.publicKey,
                     poolMint,
+                    rewardVault: rewardVault.publicKey,
+                    rewardDeposit: depositor,
+                    rewardAuthority: provider.wallet.publicKey,
+                    tokenProgram: TokenInstructions.TOKEN_PROGRAM_ID,
                     rent: anchor.web3.SYSVAR_RENT_PUBKEY
-                }
+                },
+                signers: [rewardVault],
+                instructions: [
+                    ...(await serumCmn.createTokenAccountInstrs(
+                        provider,
+                        rewardVault.publicKey,
+                        mint,
+                        staking_pool_imprint
+                    ))
+                ]
             }
         );
         console.log("tx id: ", tx);

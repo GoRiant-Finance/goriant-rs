@@ -1,18 +1,11 @@
 const anchor = require("@project-serum/anchor");
-const TokenInstructions = require("@project-serum/serum").TokenInstructions;
-const fs = require('fs');
 const utils = require("./utils");
 const config = utils.readConfig();
+const provider = utils.provider;
 const program_id = new anchor.web3.PublicKey(config.programId);
-
-const provider = anchor.Provider.local('https://devnet.solana.com');
-// const provider = anchor.Provider.local();
+const idl = utils.readIdl();
 anchor.setProvider(provider);
-
-const idl = JSON.parse(fs.readFileSync('./target/idl/staking.json', 'utf8'));
-
 let program = new anchor.Program(idl, program_id);
-
 
 async function main() {
     let state_pubKey = await program.state.address();
@@ -48,11 +41,11 @@ async function main() {
             }
         );
         console.log("tx: ", tx);
-        let memberAccount = await program.account.member.associated(provider.wallet.publicKey);
-        await utils.printMemberAccountInfo(memberAccount);
     } catch (e) {
         console.log("Create member Error: ", e);
     }
+    let memberAccount = await program.account.member.associated(provider.wallet.publicKey);
+    await utils.printMemberAccountInfo(memberAccount);
 }
 
 main().then(() => console.log('Success'));
