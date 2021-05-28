@@ -240,9 +240,9 @@ mod staking {
         };
 
 
-        // Mint pool tokens to the staker - staking pool token.
+        // Mint pool tokens for the investor - staking pool token.
 
-        msg!("Mint proof token to staker vault");
+        msg!("Mint proof token to investor vault");
         let seeds = &[
             state.to_account_info().key.as_ref(),
             &[state.nonce],
