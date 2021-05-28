@@ -43,13 +43,13 @@ mod staking {
         /// Reward Info
         /// Accrued token per share
         pub acc_token_per_share: u64,
-        /// The block number when CAKE mining ends.
+        /// The block number when RIANT mining ends.
         pub bonus_end_block: i64,
-        /// The block number when CAKE mining starts.
+        /// The block number when RIANT mining starts.
         pub start_block: i64,
         /// The block number of the last pool update
         pub last_reward_block: i64,
-        /// CAKE tokens created per block.
+        /// RIANT tokens created per block.
         pub reward_per_block: u64,
     }
 
