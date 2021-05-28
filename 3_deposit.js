@@ -44,8 +44,7 @@ async function main() {
                     tokenProgram: TokenInstructions.TOKEN_PROGRAM_ID,
                     clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
                     rent: anchor.web3.SYSVAR_RENT_PUBKEY
-                },
-                signers: [state.imprint]
+                }
             }
         );
         console.log("tx: ", tx);

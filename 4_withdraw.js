@@ -31,7 +31,7 @@ async function main() {
         provider.wallet.publicKey
     );
     console.log("token account: ", token_account.toString(), " - amount: ", await utils.tokenBalance(token_account));
-    let withdraw_amount = new anchor.BN(45 * tokenInLamport);
+    let withdraw_amount = new anchor.BN(1500 * tokenInLamport);
     try {
         let tx = await program.rpc.withdraw(
             withdraw_amount,
@@ -40,6 +40,7 @@ async function main() {
                     stakingPool: state_pubKey,
                     imprint: state.imprint,
                     poolMint: state.poolMint,
+                    rewardVault: state.rewardVault,
                     member: member,
                     authority: provider.wallet.publicKey,
                     balances: balances,
