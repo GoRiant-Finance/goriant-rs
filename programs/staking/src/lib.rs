@@ -182,9 +182,6 @@ mod staking {
 
     pub fn deposit(ctx: Context<DepositRequest>, amount: u64) -> Result<(), ProgramError>
     {
-        if amount < 0 {
-            return Err(ErrorCode::InvalidDepositor.into());
-        }
         let state = &mut ctx.accounts.staking_pool;
         update_pool(state, ctx.accounts.clock.clone(), ctx.accounts.pool_mint.supply).unwrap();
         let member = &mut ctx.accounts.member;
