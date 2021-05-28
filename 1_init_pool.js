@@ -11,18 +11,19 @@ let program = new anchor.Program(idl, program_id);
 
 
 async function main() {
-    // const [mint, god] = await serumCmn.createMintAndVault(
-    //     provider,
-    //     new anchor.BN(1000000)
-    // );
+    const [mint, god] = await serumCmn.createMintAndVault(
+        provider,
+        new anchor.BN(1000000)
+    );
 
-    // config.token = mint.toBase58();
-    // config.vault = god.toBase58();
-    // utils.writeConfig(config);
-    const depositor = new anchor.web3.PublicKey("7MUT98i9VU3JtZbsjnViHGafQR6qph9UQmxGngMMSk1X");
+    config.token = mint.toBase58();
+    config.vault = god.toBase58();
+    utils.writeConfig(config);
+
+    const depositor = new anchor.web3.PublicKey("FY3QHJREKMii9jgQCTa7bthUHZ1X6Gsbz8PWtcmcUXrd");
     const minuteInSecond = 60;
     const tokenInLamport = 1000000000;
-    const mint = new anchor.web3.PublicKey(config.token);
+    // const mint = new anchor.web3.PublicKey(config.token);
     try {
         const stateRate = new anchor.BN(1);
         const withdrawTimeLock = new anchor.BN(0);
@@ -32,7 +33,7 @@ async function main() {
         const end_block = new anchor.BN(new Date().getTime() / 1000 + 120 * minuteInSecond);
         const reward_per_block = new anchor.BN(1 * tokenInLamport);
         let state_pubKey = await program.state.address();
-        const rewardVault = new anchor.web3.Keypair();
+        const rewardVault = anchor.web3.Keypair.generate();
 
         const [staking_pool_imprint, state_imprint_nonce] = await anchor.web3.PublicKey.findProgramAddress(
             [state_pubKey.toBuffer()],
@@ -75,7 +76,7 @@ async function main() {
         console.log("tx id: ", tx);
         console.log("poolMint.authority: ", staking_pool_imprint.toString());
     } catch (e) {
-        console.log("Pool has been initialized");
+        console.log("Pool has been initialized: ", e);
     }
 
 
