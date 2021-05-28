@@ -1,18 +1,15 @@
 const anchor = require("@project-serum/anchor");
-const TokenInstructions = require("@project-serum/serum").TokenInstructions;
 const fs = require('fs');
 const utils = require("./utils");
-const config = utils.readConfig();
-const program_id = new anchor.web3.PublicKey(config.programId);
 
-// const provider = anchor.Provider.local('https://devnet.solana.com');
-const provider = anchor.Provider.local();
+const config = utils.readConfig();
+const provider = utils.provider;
+
+const program_id = new anchor.web3.PublicKey(config.programId);
 anchor.setProvider(provider);
 
 const idl = JSON.parse(fs.readFileSync('./target/idl/staking.json', 'utf8'));
-
 let program = new anchor.Program(idl, program_id);
-
 
 async function main() {
     let state_pubKey = await program.state.address();
@@ -35,6 +32,7 @@ async function main() {
     console.log("balances.spt: ", balances.spt.toString());
     console.log("balances.vaultStake: ", balances.vaultStake.toString())
     console.log("balances.vaultPw: ", balances.vaultPw.toString())
+
 
     try {
         let tx = await program.rpc.createMember(

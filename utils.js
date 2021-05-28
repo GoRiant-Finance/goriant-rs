@@ -2,8 +2,8 @@ const anchor = require("@project-serum/anchor");
 const serumCmn = require("@project-serum/common");
 const fs = require('fs');
 
-// const provider = anchor.Provider.local('https://api.devnet.solana.com');
-const provider = anchor.Provider.local();
+const provider = anchor.Provider.local('https://api.devnet.solana.com');
+
 async function createBalanceSandbox(provider, r, registrySigner) {
   const spt = new anchor.web3.Account();
   const vaultStake = new anchor.web3.Account();
@@ -145,5 +145,6 @@ module.exports = {
   printVendor,
   printRegistrarSigner,
   readConfig,
-  writeConfig
+  writeConfig,
+  provider
 };

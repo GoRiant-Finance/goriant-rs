@@ -4,10 +4,8 @@ const TokenInstructions = require("@project-serum/serum").TokenInstructions;
 const fs = require('fs');
 const utils = require("./utils");
 const config = utils.readConfig();
+const provider = utils.provider;
 const program_id = new anchor.web3.PublicKey(config.programId);
-
-// const provider = anchor.Provider.local('https://devnet.solana.com');
-const provider = anchor.Provider.local();
 anchor.setProvider(provider);
 
 const idl = JSON.parse(fs.readFileSync('./target/idl/staking.json', 'utf8'));
@@ -17,6 +15,7 @@ let program = new anchor.Program(idl, program_id);
 
 async function main() {
     const mint = new anchor.web3.PublicKey(config.token);
+    const token_account = new anchor.web3.PublicKey(config.vault);
     let state_pubKey = await program.state.address();
     let state = await program.state();
     let member = await program.account.member.associatedAddress(provider.wallet.publicKey);
@@ -29,13 +28,16 @@ async function main() {
         [state_pubKey.toBuffer(), member.toBuffer()],
         program.programId
     );
-    const token_account = await serumCmn.createTokenAccount(
-        provider,
-        mint,
-        provider.wallet.publicKey
-    );
+
+    // F84HRoBGSRUYcQxKwdQZT1jAKCvacF3aGwFDDYYtDzRk
+
+    // sol wallet (ví chính)
+    // create member => sol wallet
+    // deposit => sol wallet => balances: spt, stake_vault, god/(vault = token) <====
+
+
     console.log("token account: ", token_account.toString(), " - amount: ", await utils.tokenBalance(token_account));
-    let withdraw_amount = new anchor.BN(10);
+    let withdraw_amount = new anchor.BN(99);
     try {
         let tx = await program.rpc.withdraw(
             withdraw_amount,

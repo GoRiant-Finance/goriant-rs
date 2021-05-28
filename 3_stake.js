@@ -3,16 +3,12 @@ const TokenInstructions = require("@project-serum/serum").TokenInstructions;
 const fs = require('fs');
 const utils = require("./utils");
 const config = utils.readConfig();
+const provider = utils.provider;
+
 const program_id = new anchor.web3.PublicKey(config.programId);
-
-// const provider = anchor.Provider.local('https://devnet.solana.com');
-const provider = anchor.Provider.local();
 anchor.setProvider(provider);
-
 const idl = JSON.parse(fs.readFileSync('./target/idl/staking.json', 'utf8'));
-
 let program = new anchor.Program(idl, program_id);
-
 
 async function main() {
     // const mint = new anchor.web3.PublicKey(config.token);
@@ -32,7 +28,7 @@ async function main() {
         program.programId
     );
     // let token_account = await provider.connection.getTokenAccountsByOwner(provider.wallet.publicKey, {mint: mint})
-    let deposit_amount = new anchor.BN(100);
+    let deposit_amount = new anchor.BN(100000);
     try {
         let tx = await program.rpc.depositAndState(
             deposit_amount,
