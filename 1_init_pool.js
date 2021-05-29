@@ -11,9 +11,12 @@ let program = new anchor.Program(idl, program_id);
 
 
 async function main() {
+    const tokenInLamport = 1000000000;
     const [mint, god] = await serumCmn.createMintAndVault(
         provider,
-        new anchor.BN(1000000)
+        new anchor.BN(10000 * tokenInLamport),
+        provider.wallet.publicKey,
+        9
     );
 
     config.token = mint.toBase58();
@@ -22,7 +25,6 @@ async function main() {
 
     const depositor = new anchor.web3.PublicKey("FY3QHJREKMii9jgQCTa7bthUHZ1X6Gsbz8PWtcmcUXrd");
     const minuteInSecond = 60;
-    const tokenInLamport = 1000000000;
     // const mint = new anchor.web3.PublicKey(config.token);
     try {
         const stateRate = new anchor.BN(1);
@@ -31,9 +33,9 @@ async function main() {
         const start_block = new anchor.BN(new Date().getTime() / 1000);// + 0.5 * minuteInSecond);
         // reward end after begin 120 minute
         const end_block = new anchor.BN(new Date().getTime() / 1000 + 120 * minuteInSecond);
-        const reward_per_block = new anchor.BN(1 * tokenInLamport);
+        const reward_per_block = new anchor.BN(0.1 * tokenInLamport);
         let state_pubKey = await program.state.address();
-        const rewardVault = anchor.web3.Keypair.generate();
+        const rewardVault = new anchor.web3.Keypair();
 
         const [staking_pool_imprint, state_imprint_nonce] = await anchor.web3.PublicKey.findProgramAddress(
             [state_pubKey.toBuffer()],
@@ -57,7 +59,7 @@ async function main() {
                     authority: provider.wallet.publicKey,
                     poolMint,
                     rewardVault: rewardVault.publicKey,
-                    rewardDeposit: depositor,
+                    rewardDeposit: god,
                     rewardAuthority: provider.wallet.publicKey,
                     tokenProgram: TokenInstructions.TOKEN_PROGRAM_ID,
                     rent: anchor.web3.SYSVAR_RENT_PUBKEY

@@ -56,25 +56,25 @@
     superstruct "0.8.3"
 
 "@project-serum/serum@*", "@project-serum/serum@^0.13.21":
-  version "0.13.37"
-  resolved "https://registry.yarnpkg.com/@project-serum/serum/-/serum-0.13.37.tgz#18cc2613a655a8e782e14c4d55a2707a79fbc625"
-  integrity sha512-Bt7D/0P0M1b+xyygCU9z1p7Pec6vontzy4Q92TgIg33/J1qiAR/899HXGlr7oho/NntGNwIlbEU22nqsWWuAiA==
+  version "0.13.38"
+  resolved "https://registry.yarnpkg.com/@project-serum/serum/-/serum-0.13.38.tgz#ef50a0f50bd69fd7b51309fbb44ad995a1e6e210"
+  integrity sha512-TOph1Hxoi5kOUg72tWbbNGviqBw29SrP4BH70gXtqUDiFTQJLrE2yfS5HC7p0JaU8p9WdrYGnxcFKCddZJ3ing==
   dependencies:
     "@solana/web3.js" "^0.90.0"
     bn.js "^5.1.2"
     buffer-layout "^1.2.0"
 
 "@solana/spl-token@*":
-  version "0.1.4"
-  resolved "https://registry.yarnpkg.com/@solana/spl-token/-/spl-token-0.1.4.tgz#7fc6ba82a7fbb2b0907f7ffc87709488db83ed2a"
-  integrity sha512-W8uSC4ysWVjbKK7lvsIHFxdMIkOCEoOm9tYY9VVpBlUIp4+K5bpPxHXUlxMiHfkKPWAxab6IGUn71VVLg8uq5Q==
+  version "0.1.5"
+  resolved "https://registry.yarnpkg.com/@solana/spl-token/-/spl-token-0.1.5.tgz#dcb6cb4bd7acb3c6457500502b6e62c75d18d05b"
+  integrity sha512-2rlgKbH3lCTIuxwm4A+R2/t+w3Rt2tJLpGH6jefQQUpM6MyxlQWV+P9pB7+lozuWDOJ7A2OyKkUEt/HlxyHFjw==
   dependencies:
     "@babel/runtime" "^7.10.5"
-    "@solana/web3.js" "^1.9.1"
+    "@solana/web3.js" "^1.12.0"
     bn.js "^5.1.0"
     buffer "6.0.3"
     buffer-layout "^1.2.0"
-    dotenv "8.2.0"
+    dotenv "10.0.0"
 
 "@solana/web3.js@^0.90.0":
   version "0.90.5"
@@ -99,10 +99,10 @@
     tweetnacl "^1.0.0"
     ws "^7.0.0"
 
-"@solana/web3.js@^1.11.0", "@solana/web3.js@^1.9.1":
-  version "1.14.0"
-  resolved "https://registry.yarnpkg.com/@solana/web3.js/-/web3.js-1.14.0.tgz#6bda2a4ab4fc1dd825769d910c8c303243d998ed"
-  integrity sha512-CtGvJQbhUR6mNOGUYX3f0XJCgW2c5UM7pL8MZbv7Pc6vflh+hiKBd1vzi8HvBr9dKhyNDvq7jHgZ6zezz0y9Cw==
+"@solana/web3.js@^1.11.0", "@solana/web3.js@^1.12.0":
+  version "1.15.0"
+  resolved "https://registry.yarnpkg.com/@solana/web3.js/-/web3.js-1.15.0.tgz#e90f928f4e270fddbe89e83210d54f757128a306"
+  integrity sha512-q9GWL6ayHbEljzp2l5bdz46618h28KJ07H0m1pL2p/LRF+Jh9x5X/FME87La4/6lVrsSyymSaKnn+loiTTqB7w==
   dependencies:
     "@babel/runtime" "^7.12.5"
     bn.js "^5.0.0"
@@ -479,10 +479,10 @@ dot-case@^3.0.4:
     no-case "^3.0.4"
     tslib "^2.0.3"
 
-dotenv@8.2.0:
-  version "8.2.0"
-  resolved "https://registry.yarnpkg.com/dotenv/-/dotenv-8.2.0.tgz#97e619259ada750eea3e4ea3e26bceea5424b16a"
-  integrity sha512-8sJ78ElpbDJBHNeBzUbUVLsqKdccaa/BXF1uPTw3GrvQTBgrQrtObr2mUrE38vzYd8cEv+m/JBfDLioYcfXoaw==
+dotenv@10.0.0:
+  version "10.0.0"
+  resolved "https://registry.yarnpkg.com/dotenv/-/dotenv-10.0.0.tgz#3d4227b8fb95f81096cdd2b66653fb2c7085ba81"
+  integrity sha512-rlBi9d8jpv9Sf1klPjNfFAuWDjKLwTIJJ/VxtoTwIR6hnZxcEOQCZg2oIL3MWBYw5GpUDKOEnND7LXTbIpQ03Q==
 
 elliptic@^6.5.2:
   version "6.5.4"
@@ -515,9 +515,9 @@ error-ex@^1.3.1:
     is-arrayish "^0.2.1"
 
 es-abstract@^1.18.0-next.2:
-  version "1.18.2"
-  resolved "https://registry.yarnpkg.com/es-abstract/-/es-abstract-1.18.2.tgz#6eb518b640262e8ddcbd48e0bc8549f82efd48a7"
-  integrity sha512-byRiNIQXE6HWNySaU6JohoNXzYgbBjztwFnBLUTiJmWXjaU9bSq3urQLUlNLQ292tc+gc07zYZXNZjaOoAX3sw==
+  version "1.18.3"
+  resolved "https://registry.yarnpkg.com/es-abstract/-/es-abstract-1.18.3.tgz#25c4c3380a27aa203c44b2b685bba94da31b63e0"
+  integrity sha512-nQIr12dxV7SSxE6r6f1l3DtAeEYdsGpps13dR0TwJg1S8gyp4ZPgy3FZcHBgbiQqnoqSTb+oC+kO4UQ0C/J8vw==
   dependencies:
     call-bind "^1.0.2"
     es-to-primitive "^1.2.1"
