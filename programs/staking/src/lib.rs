@@ -242,7 +242,7 @@ mod staking {
 
         // Mint pool tokens for the investor - staking pool token.
 
-        msg!("Mint proof token to investor vault");
+        msg!("Mint proof token for investor vault");
         let seeds = &[
             state.to_account_info().key.as_ref(),
             &[state.nonce],
@@ -387,8 +387,8 @@ mod staking {
         let amount = ctx.accounts.balances.spt.amount.clone();
         let pending_reward = if ctx.accounts.clock.unix_timestamp > state.last_reward_block && staked_token_supply != 0 {
             let multiplier = get_multiplier(state.last_reward_block, ctx.accounts.clock.unix_timestamp, state.bonus_end_block);
-            let cake_reward = multiplier.checked_mul(state.reward_per_block).unwrap();
-            let adjusted_token_per_share = state.acc_token_per_share as u128 + (cake_reward as u128)
+            let token_reward = multiplier.checked_mul(state.reward_per_block).unwrap();
+            let adjusted_token_per_share = state.acc_token_per_share as u128 + (token_reward as u128)
                 .checked_mul(state.precision_factor as u128).unwrap()
                 .checked_div(staked_token_supply as u128).unwrap();
             amount as u128 * adjusted_token_per_share / state.precision_factor as u128 - member_reward_debt as u128
