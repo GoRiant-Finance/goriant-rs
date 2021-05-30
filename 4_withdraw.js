@@ -31,7 +31,7 @@ async function main() {
         provider.wallet.publicKey
     );
     console.log("token account: ", token_account.toString(), " - amount: ", await utils.tokenBalance(token_account));
-    let withdraw_amount = new anchor.BN(1500 * tokenInLamport);
+    let withdraw_amount = new anchor.BN(900 * tokenInLamport);
     try {
         let tx = await program.rpc.withdraw(
             withdraw_amount,

@@ -5,12 +5,13 @@ const config = utils.readConfig();
 const provider = utils.provider;
 const program_id = new anchor.web3.PublicKey(config.programId);
 const idl = utils.readIdl();
+const tokenInLamport = anchor.web3.LAMPORTS_PER_SOL;
 anchor.setProvider(provider);
 let program = new anchor.Program(idl, program_id);
 
 async function main() {
-    const tokenInLamport = 1000000000;
-    const god = new anchor.web3.PublicKey("7MUT98i9VU3JtZbsjnViHGafQR6qph9UQmxGngMMSk1X");
+
+    const god = new anchor.web3.PublicKey(config.vault);
     let state_pubKey = await program.state.address();
     let state = await program.state();
     let member = await program.account.member.associatedAddress(provider.wallet.publicKey);
