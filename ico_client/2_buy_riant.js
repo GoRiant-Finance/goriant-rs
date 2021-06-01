@@ -1,6 +1,7 @@
 const anchor = require("@project-serum/anchor");
 const TokenInstructions = require("@project-serum/serum").TokenInstructions;
-const Token = require("@solana/spl-token");
+const {NATIVE_MINT, Token} = require("@solana/spl-token");
+const TokenUtils = require("./token_utils");
 const serumCmn = require("@project-serum/common");
 const utils = require("./utils");
 const config = utils.readConfig();
@@ -27,19 +28,18 @@ async function sendSol(receiver, amount) {
   await utils.sleep(1000);
 }
 
-
 async function purchase_riant() {
 
+  console.log("Token.NATIVE_MINT: ", NATIVE_MINT.toString());
   const {key, beneficiary} = await program.state();
 
-
-  const buyerSolWallet = await serumCmn.createTokenAccount(
-    provider,
-    Token.NATIVE_MINT,
-    provider.wallet.publicKey
+  const buyerSolWallet = await Token.createWrappedNativeAccount(
+    provider.connection,
+    key,
+    owner,
+    provider.wallet,
+    1 * tokenInLamport
   );
-
-  await sendSol(buyerSolWallet, 1 * tokenInLamport);
 
   console.log('key: ', key.toString())
   console.log('beneficiary: ', beneficiary.toString())
@@ -50,18 +50,18 @@ async function purchase_riant() {
   const nonce = 3;
   try {
 
-    const tx = await program.rpc.buy(
-      owner,
-      amount,
-      nonce,
-      {
-        accounts: {
-          icoContract: key,
-          buyerSolWallet,
-          beneficiary,
-          tokenProgram: TokenInstructions.TOKEN_PROGRAM_ID,
-        }
-      });
+    // const tx = await program.rpc.buy(
+    //   owner,
+    //   amount,
+    //   nonce,
+    //   {
+    //     accounts: {
+    //       icoContract: key,
+    //       buyerSolWallet,
+    //       beneficiary,
+    //       tokenProgram: TokenInstructions.TOKEN_PROGRAM_ID,
+    //     }
+    //   });
 
     console.log("transferred SOL to Seller");
 
