@@ -23,15 +23,8 @@ async function main() {
   utils.writeConfig(config);
 
   const minuteInSecond = 60;
-  // const mint = new anchor.web3.PublicKey(config.token);
   try {
-    const stateRate = new anchor.BN(1);
-    const withdrawTimeLock = new anchor.BN(0);
-    // reward start after 30 minute
-    const start_block = new anchor.BN(new Date().getTime() / 1000);// + 0.5 * minuteInSecond);
-    // reward end after begin 120 minute
-    const end_block = new anchor.BN(new Date().getTime() / 1000 + 120 * minuteInSecond);
-    const reward_per_block = new anchor.BN(0.1 * tokenInLamport);
+    const start = new anchor.BN(new Date().getTime() / 1000);// + 0.5 * minuteInSecond);
     let state_pubKey = await program.state.address();
     const rewardVault = new anchor.web3.Keypair();
 

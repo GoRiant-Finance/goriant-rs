@@ -30,41 +30,41 @@ async function sendSol(receiver, amount) {
 
 async function purchase_riant() {
 
-  console.log("Token.NATIVE_MINT: ", NATIVE_MINT.toString());
-  const {key, beneficiary} = await program.state();
-
-  const buyerSolWallet = await Token.createWrappedNativeAccount(
-    provider.connection,
-    key,
-    owner,
-    provider.wallet,
-    1 * tokenInLamport
-  );
-
+  const {key, icoPool, imprint} = await program.state();
+  const mint = new anchor.web3.PublicKey(config.mint);
+  const beneficiary = new anchor.web3.PublicKey("2drZT63chJZZhp1BXGTQX1k8HiqYbkw6REpTd1faAKBJ");
   console.log('key: ', key.toString())
   console.log('beneficiary: ', beneficiary.toString())
-  console.log('buyerSolWallet: ', buyerSolWallet.toString());
-  console.log('buyerSolWallet balance: ', await utils.balance(buyerSolWallet));
+  console.log('buyerSolWallet: ', provider.wallet.publicKey.toString());
+  console.log('buyerSolWallet balance: ', await utils.balance(provider.wallet.publicKey));
 
-  const amount = new anchor.BN(1000000);
-  const nonce = 3;
+  let a = await provider.connection.getAccountInfo(provider.wallet.publicKey);
+  console.log(a);
+  const amount = new anchor.BN(10);
+  const buyerTokenWallet = await serumCmn.createTokenAccount(
+      provider,
+      mint,
+      provider.wallet.publicKey
+  );
+
   try {
 
-    // const tx = await program.rpc.buy(
-    //   owner,
-    //   amount,
-    //   nonce,
-    //   {
-    //     accounts: {
-    //       icoContract: key,
-    //       buyerSolWallet,
-    //       beneficiary,
-    //       tokenProgram: TokenInstructions.TOKEN_PROGRAM_ID,
-    //     }
-    //   });
-
-    console.log("transferred SOL to Seller");
-
+    const tx = await program.rpc.buy(
+      amount,
+      {
+        accounts: {
+          icoContract: key,
+          icoImprint: imprint,
+          icoPool,
+          beneficiary,
+          buyerSolWallet: provider.wallet.publicKey,
+          buyerAuthority: provider.wallet.publicKey,
+          buyerTokenWallet,
+          tokenProgram: TokenInstructions.TOKEN_PROGRAM_ID,
+          systemProgram: anchor.web3.SystemProgram.programId
+        }
+      });
+    console.log("tx: ", tx);
   } catch (e) {
     console.log("Purchase RIANT error due to: ", e);
   }
