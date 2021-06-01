@@ -30,9 +30,8 @@ async function sendSol(receiver, amount) {
 
 async function purchase_riant() {
 
-  const {key, icoPool, imprint} = await program.state();
+  const {key, beneficiary, icoPool, imprint} = await program.state();
   const mint = new anchor.web3.PublicKey(config.mint);
-  const beneficiary = new anchor.web3.PublicKey("2drZT63chJZZhp1BXGTQX1k8HiqYbkw6REpTd1faAKBJ");
   console.log('key: ', key.toString())
   console.log('beneficiary: ', beneficiary.toString())
   console.log('buyerSolWallet: ', provider.wallet.publicKey.toString());
