@@ -2,7 +2,10 @@ const anchor = require("@project-serum/anchor");
 const serumCmn = require("@project-serum/common");
 const fs = require('fs');
 
-const provider = anchor.Provider.local('http://localhost:8899');
+
+// const provider = anchor.Provider.local('http://localhost:8899');
+const provider = anchor.Provider.local('https://api.devnet.solana.com');
+
 async function log_state(state) {
   console.log("state.key: ", state.key.toString());
   console.log("state.authority: ", state.authority.toString());
@@ -120,11 +123,11 @@ async function tokenBalance(address) {
 
 function writeConfig(c) {
   let data = JSON.stringify(c);
-  fs.writeFileSync('./config.json', data);
+  fs.writeFileSync('../config.json', data);
 }
 
 function readConfig() {
-  return JSON.parse(fs.readFileSync('./config.json', 'utf8'));
+  return JSON.parse(fs.readFileSync('../config.json', 'utf8'));
 }
 function readIdl() {
   return JSON.parse(fs.readFileSync('../target/idl/ico.json', 'utf8'));
