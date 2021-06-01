@@ -2,7 +2,7 @@ const anchor = require("@project-serum/anchor");
 const serumCmn = require("@project-serum/common");
 const fs = require('fs');
 
-const provider = anchor.Provider.local('http://127.0.0.1:8899');
+const provider = anchor.Provider.local('http://localhost:8899');
 async function log_state(state) {
   console.log("state.key: ", state.key.toString());
   console.log("state.authority: ", state.authority.toString());

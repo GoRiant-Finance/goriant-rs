@@ -2,11 +2,12 @@ mod error;
 
 use {
     anchor_lang::prelude::*,
-    anchor_spl::token::{self, TokenAccount},
+    anchor_spl::token::{self, TokenAccount, Transfer},
     std::convert::Into,
 };
 
 use error::ErrorCode;
+use crate::ico::RiantICO;
 
 #[program]
 pub mod ico {
@@ -45,8 +46,7 @@ pub mod ico {
             msg!("Init Riant ICO");
             msg!("Init Riant ICO new program");
 
-            msg!("Transfer 200_000 RIANT from creator to ICO pool vault");
-            msg!("Cap {} - Rate {}", cap, rate);
+            msg!("Transfer RIANT from depositor to ICO pool");
             let cpi_ctx = CpiContext::new(
                 ctx.accounts.token_program.clone(),
                 token::Transfer {
@@ -57,7 +57,7 @@ pub mod ico {
             );
             let amount = (cap as u64)
                 .checked_mul(rate as u64).unwrap()
-                .checked_mul(1000000000).unwrap() ;
+                .checked_mul(1000000000).unwrap();
             if let Ok(()) = token::transfer(cpi_ctx, amount) {} else {
                 return Err(ErrorCode::TransferTokenFail.into());
             };
@@ -78,15 +78,45 @@ pub mod ico {
         }
     }
 
-    pub fn buy(_ctx: Context<PurchaseRequest>, _amount: u32) -> Result<(), ProgramError> {
+    pub fn buy(ctx: Context<PurchaseRequest>,
+               _receiver: Pubkey,
+               amount: u64,
+               nonce: u8,
+    ) -> Result<(), ProgramError> {
+        msg!("SOL amount: {}", amount);
+        msg!("beneficiary from ICO : {}", ctx.accounts.ico_contract.beneficiary);
+        msg!("beneficiary from Purchase : {}", ctx.accounts.beneficiary.to_account_info().key);
+
+        msg!("Transfer SOL to beneficiary");
+
+        let seeds = &[
+            ctx.accounts.buyer_sol_wallet.to_account_info().key.as_ref(),
+            &[nonce],
+        ];
+        let purchase_signer = &[&seeds[..]];
+        let cpi_accounts = Transfer {
+            from: ctx.accounts.buyer_sol_wallet.to_account_info().clone(),
+            to: ctx.accounts.beneficiary.to_account_info().clone(),
+            authority: ctx.accounts.buyer_sol_wallet.to_account_info().clone(),
+        };
+        let cpi_program = ctx.accounts.token_program.clone();
+        let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, purchase_signer);
+        token::transfer(cpi_ctx, amount)?;
+
         Ok(())
     }
+
 }
 
 #[derive(Accounts)]
 pub struct PurchaseRequest<'info> {
-    #[account(signer)]
-    authority: AccountInfo<'info>,
+    #[account(mut, has_one = beneficiary)]
+    ico_contract: ProgramAccount<'info, RiantICO>,
+    #[account(mut)]
+    buyer_sol_wallet: CpiAccount<'info, TokenAccount>,
+    #[account(mut)]
+    beneficiary: CpiAccount<'info, TokenAccount>,
+    token_program: AccountInfo<'info>,
 }
 
 #[derive(Accounts)]
