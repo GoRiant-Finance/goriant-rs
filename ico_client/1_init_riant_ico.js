@@ -16,7 +16,7 @@ async function init_riant_ico() {
 
     const mint = new anchor.web3.PublicKey(config.token)
     const god = new anchor.web3.PublicKey(config.vault)
-  
+
     // const [mint, god] = await serumCmn.createMintAndVault(
     //     provider,
     //     new anchor.BN(1_000_000 * anchor.web3.LAMPORTS_PER_SOL),
@@ -42,7 +42,7 @@ async function init_riant_ico() {
 
         const statePubKey = await program.state.address();
         const start = new anchor.BN(new Date().getTime() / 1000);// + 0.5 * minuteInSecond);
-        const cap = 10000; // raising 10,000 SOL
+        const cap = 10_000; // raising 100,000 SOL
         const rate = 20; // 1 SOL = 20 RIANT
         const depositor = god;
 
