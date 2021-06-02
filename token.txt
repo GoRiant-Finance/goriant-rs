@@ -1,2 +1,5 @@
-token: 65wqPBu8uguDR1jR8eyLqWTVaqGud6ZKmcEPFYXpb5LV
-vault: 6bheFVoGz1CagBbe7235QrC5y8zFCRivQQfUvj7uaUo6
+staking: HBG7xUHh2gH3PrLMDeXewxZ4hiVgoCXe6NEuUbseGzKa
+ico: Cw4dVrCMR7B8r2CJMQJS1Vbzy683mfxy2e6bWKEbrCHh
+
+token: Et7Vv9LVG76CEecrqxFR6KjM3RpyZPmxMndga1CKDtay
+vault: EpbzUmhbyiJt9TqnkCTSLDHio4NR5zGh2sYc6jfspqFn
