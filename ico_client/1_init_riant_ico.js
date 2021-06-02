@@ -14,14 +14,19 @@ const owner = provider.wallet.publicKey;
 
 async function init_riant_ico() {
 
-    const [mint, god] = await serumCmn.createMintAndVault(
-        provider,
-        new anchor.BN(1_000_000 * anchor.web3.LAMPORTS_PER_SOL),
-        owner, 9);
-
-    config.mint = mint.toBase58();
-    config.god = god.toBase58();
-    utils.writeConfig(config);
+    const mint = new anchor.web3.PublicKey(config.token)
+    const god = new anchor.web3.PublicKey(config.vault)
+  
+    // const [mint, god] = await serumCmn.createMintAndVault(
+    //     provider,
+    //     new anchor.BN(1_000_000 * anchor.web3.LAMPORTS_PER_SOL),
+    //     owner, 9);
+    //
+    // console.log('mint: ', mint.toString())
+    // console.log('god: ', god.toString())
+    // config.token = mint.toBase58();
+    // config.vault = god.toBase58();
+    // utils.writeConfig(config);
 
     // 1. issue 1_000_000 RIANT
     // 2. anh send 200_000 RIANT vào vault của ICO program

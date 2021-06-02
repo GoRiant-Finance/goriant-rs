@@ -1,6 +1,6 @@
 const anchor = require("@project-serum/anchor");
 const TokenInstructions = require("@project-serum/serum").TokenInstructions;
-const {NATIVE_MINT, Token} = require("@solana/spl-token");
+const {Token, ASSOCIATED_TOKEN_PROGRAM_ID} = require("@solana/spl-token");
 const TokenUtils = require("./token_utils");
 const serumCmn = require("@project-serum/common");
 const utils = require("./utils");
@@ -31,7 +31,7 @@ async function sendSol(receiver, amount) {
 async function purchase_riant() {
 
   const {key, beneficiary, icoPool, imprint} = await program.state();
-  const mint = new anchor.web3.PublicKey(config.mint);
+  const mint = new anchor.web3.PublicKey(config.token);
   console.log('key: ', key.toString())
   console.log('beneficiary: ', beneficiary.toString())
   console.log('buyerSolWallet: ', provider.wallet.publicKey.toString());
@@ -39,12 +39,20 @@ async function purchase_riant() {
 
   let a = await provider.connection.getAccountInfo(provider.wallet.publicKey);
   console.log(a);
-  const amount = new anchor.BN(10);
-  const buyerTokenWallet = await serumCmn.createTokenAccount(
-      provider,
-      mint,
-      provider.wallet.publicKey
-  );
+
+  const amount = new anchor.BN(10 * tokenInLamport);
+
+  console.log('owner: ', owner.toString())
+  console.log('mint: ', mint.toString())
+
+  const buyerTokenWallet = await Token.getAssociatedTokenAddress(
+    ASSOCIATED_TOKEN_PROGRAM_ID,
+    TokenInstructions.TOKEN_PROGRAM_ID,
+    mint,
+    owner
+  )
+
+  console.log('vault: ', buyerTokenWallet.toString())
 
   try {
 
