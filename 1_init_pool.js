@@ -11,29 +11,28 @@ let program = new anchor.Program(idl, program_id);
 const tokenInLamport = anchor.web3.LAMPORTS_PER_SOL;
 
 async function main() {
-  // const [mint, god] = await serumCmn.createMintAndVault(
-  //   provider,
-  //   new anchor.BN(1_000_000 * anchor.web3.LAMPORTS_PER_SOL),
-  //   provider.wallet.publicKey,
-  //   9
-  // );
-  //
-  // config.token = mint.toBase58();
-  // config.vault = god.toBase58();
-  // utils.writeConfig(config);
+  const [mint, god] = await serumCmn.createMintAndVault(
+    provider,
+    new anchor.BN(1_000_000 * anchor.web3.LAMPORTS_PER_SOL),
+    provider.wallet.publicKey,
+    9
+  );
 
-  const mint = new anchor.web3.PublicKey(config.token);
-  const god = new anchor.web3.PublicKey(config.vault);
+  config.token = mint.toBase58();
+  config.vault = god.toBase58();
+  utils.writeConfig(config);
+  //
+  // const mint = new anchor.web3.PublicKey(config.token);
+  // const god = new anchor.web3.PublicKey(config.vault);
 
   const minuteInSecond = 60;
-  // const mint = new anchor.web3.PublicKey(config.token);
   try {
     const stateRate = new anchor.BN(1);
     const withdrawTimeLock = new anchor.BN(0);
     // reward start immediately
     const start_block = new anchor.BN(new Date().getTime() / 1000);// + 0.5 * minuteInSecond);
     // reward end after begin 30 day
-    const end_block = new anchor.BN(new Date().getTime() / 1000 + (minuteInSecond * 60 * 24 * 30) );
+    const end_block = new anchor.BN(new Date().getTime() / 1000 + (minuteInSecond * 60) );
     const reward_per_block = new anchor.BN(1 * tokenInLamport);
     let state_pubKey = await program.state.address();
     const rewardVault = new anchor.web3.Keypair();
