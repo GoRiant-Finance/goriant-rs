@@ -1,6 +1,7 @@
 const expect = require("expect");
 const anchor = require("@project-serum/anchor");
 const TokenInstructions = require("@project-serum/serum").TokenInstructions;
+// const {Token, ASSOCIATED_TOKEN_PROGRAM_ID} = require("@solana/spl-token");
 const serumCmn = require("@project-serum/common");
 
 describe("test ico program", () => {
@@ -8,16 +9,19 @@ describe("test ico program", () => {
   anchor.setProvider(provider);
   const program = anchor.workspace.Ico;
   const owner = provider.wallet.publicKey;
+  let mint;
 
   describe("init Riant ICO pool", () => {
 
     it("test init Riant ICO program", async () => {
 
       // given
-      const [mint, god] = await serumCmn.createMintAndVault(
+      const [_mint, god] = await serumCmn.createMintAndVault(
         provider,
         new anchor.BN(1_000_000 * anchor.web3.LAMPORTS_PER_SOL),
         owner, 9);
+
+      mint = _mint;
 
       const statePubKey = await program.state.address();
       const start = new anchor.BN(new Date().getTime() / 1000);// + 0.5 * minuteInSecond);
@@ -76,6 +80,40 @@ describe("test ico program", () => {
     });
   })
 
+  describe("Airdrop", () => {
+
+    it("Test airdrop", async () => {
+
+      const {key, beneficiary, icoPool, imprint} = await program.state();
+      const amount = new anchor.BN(10 * tokenInLamport);
+
+      const clientWallet = await Token.getAssociatedTokenAddress(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TokenInstructions.TOKEN_PROGRAM_ID,
+        mint,
+        owner
+      )
+
+      const tx = await program.rpc.buy(
+        amount,
+        {
+          accounts: {
+            icoContract: key,
+            icoImprint: imprint,
+            icoPool,
+            beneficiary,
+            buyerSolWallet: provider.wallet.publicKey,
+            buyerAuthority: provider.wallet.publicKey,
+            buyerTokenWallet: clientWallet,
+            tokenProgram: TokenInstructions.TOKEN_PROGRAM_ID,
+            systemProgram: anchor.web3.SystemProgram.programId
+          }
+        });
+
+      expect(tx).not.toBeNull();
+
+    })
+  })
 
 });
 

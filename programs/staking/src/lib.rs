@@ -442,7 +442,7 @@ pub struct CreateMemberRequest<'info> {
     staking_pool: ProgramState<'info, StakingPool>,
 
     /// Member relate account
-    #[account(associated = authority, space = "264")]
+    #[account(associated = authority, space = 264)]
     member: ProgramAccount<'info, Member>,
     #[account(mut, signer)]
     authority: AccountInfo<'info>,
