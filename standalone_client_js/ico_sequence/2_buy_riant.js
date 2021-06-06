@@ -1,8 +1,6 @@
 const anchor = require("@project-serum/anchor");
 const TokenInstructions = require("@project-serum/serum").TokenInstructions;
 const {Token, ASSOCIATED_TOKEN_PROGRAM_ID} = require("@solana/spl-token");
-const TokenUtils = require("./token_utils");
-const serumCmn = require("@project-serum/common");
 const utils = require("./utils");
 const config = utils.readConfig();
 const provider = utils.provider;
