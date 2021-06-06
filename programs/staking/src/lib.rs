@@ -194,7 +194,7 @@ mod staking {
             // Deposit from depositor account to stake vault
             if pending_reward > 0
             {
-                msg!("Transfer pending reward from reward to pending vault");
+                msg!("Transfer pending reward from reward to depositor wallet");
                 let seeds = &[
                     state.to_account_info().key.as_ref(),
                     &[state.nonce],
@@ -346,7 +346,7 @@ mod staking {
         // Claim Reward
         if pending_reward > 0
         {
-            msg!("Transfer pending reward to vault pending");
+            msg!("Transfer pending reward to beneficial wallet");
             let seeds = &[
                 state.to_account_info().key.as_ref(),
                 &[state.nonce],
