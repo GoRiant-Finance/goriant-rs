@@ -64,5 +64,7 @@ pub enum ErrorCode {
     #[msg("Fund not enough to withdraw")]
     InsufficientWithdraw,
     #[msg("Value to calculate invalid")]
-    CalculateError
+    CalculateError,
+    #[msg("Withdrawal amount should greater than Zero")]
+    WithdrawZero,
 }

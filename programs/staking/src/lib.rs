@@ -276,6 +276,9 @@ mod staking {
 
     pub fn withdraw(ctx: Context<WithDrawRequest>, amount: u64) -> Result<(), ProgramError>
     {
+        if amount == 0 {
+            return Err(ErrorCode::WithdrawZero.into());
+        }
         if amount > ctx.accounts.balances.vault_stake.amount {
             return Err(ErrorCode::InsufficientWithdraw.into());
         }
@@ -419,7 +422,7 @@ pub struct CreateMemberRequest<'info> {
     staking_pool: ProgramState<'info, StakingPool>,
 
     /// Member relate account
-    #[account(associated = authority, space = "264")]
+    #[account(associated = authority, space = 264)]
     member: ProgramAccount<'info, Member>,
     #[account(mut, signer)]
     authority: AccountInfo<'info>,
@@ -572,7 +575,7 @@ impl<'info> From<&BalanceSandboxAccounts<'info>> for BalanceSandbox {
     fn from(accounts: &BalanceSandboxAccounts<'info>) -> Self {
         Self {
             spt: *accounts.spt.to_account_info().key,
-            vault_stake: *accounts.vault_stake.to_account_info().key
+            vault_stake: *accounts.vault_stake.to_account_info().key,
         }
     }
 }
