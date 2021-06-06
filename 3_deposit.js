@@ -1,5 +1,6 @@
 const anchor = require("@project-serum/anchor");
 const TokenInstructions = require("@project-serum/serum").TokenInstructions;
+const { ASSOCIATED_TOKEN_PROGRAM_ID, Token } = require('@solana/spl-token');
 const utils = require("./utils");
 const config = utils.readConfig();
 const provider = utils.provider;
@@ -11,7 +12,16 @@ let program = new anchor.Program(idl, program_id);
 
 async function main() {
 
-    const god = new anchor.web3.PublicKey(config.vault);
+    const owner = provider.wallet.publicKey;
+    const mint = new anchor.web3.PublicKey(config.token);
+
+    const god = await Token.getAssociatedTokenAddress(
+      ASSOCIATED_TOKEN_PROGRAM_ID,
+      TokenInstructions.TOKEN_PROGRAM_ID,
+      mint,
+      owner
+    )
+
     let state_pubKey = await program.state.address();
     let state = await program.state();
     let member = await program.account.member.associatedAddress(provider.wallet.publicKey);

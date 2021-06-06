@@ -1,6 +1,7 @@
 const anchor = require("@project-serum/anchor");
 const serumCmn = require("@project-serum/common");
 const TokenInstructions = require("@project-serum/serum").TokenInstructions;
+const { ASSOCIATED_TOKEN_PROGRAM_ID, Token } = require('@solana/spl-token');
 const utils = require("./utils");
 const config = utils.readConfig();
 const provider = utils.provider;
@@ -12,7 +13,10 @@ let program = new anchor.Program(idl, program_id);
 
 async function main() {
     const tokenInLamport = 1000000000;
+
+    const owner = provider.wallet.publicKey;
     const mint = new anchor.web3.PublicKey(config.token);
+
     let state_pubKey = await program.state.address();
     let state = await program.state();
     let member = await program.account.member.associatedAddress(provider.wallet.publicKey);
@@ -25,13 +29,14 @@ async function main() {
         [state_pubKey.toBuffer(), member.toBuffer()],
         program.programId
     );
-    const token_account = await serumCmn.createTokenAccount(
-        provider,
-        mint,
-        provider.wallet.publicKey
-    );
+    const token_account = await Token.getAssociatedTokenAddress(
+      ASSOCIATED_TOKEN_PROGRAM_ID,
+      TokenInstructions.TOKEN_PROGRAM_ID,
+      mint,
+      owner
+    )
     console.log("token account: ", token_account.toString(), " - amount: ", await utils.tokenBalance(token_account));
-    let withdraw_amount = new anchor.BN(900 * tokenInLamport);
+    let withdraw_amount = new anchor.BN(29 * tokenInLamport);
     try {
         let tx = await program.rpc.withdraw(
             withdraw_amount,
