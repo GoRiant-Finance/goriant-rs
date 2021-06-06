@@ -194,7 +194,7 @@ mod staking {
             // Deposit from depositor account to stake vault
             if pending_reward > 0
             {
-                msg!("Transfer pending reward from reward to pending vault");
+                msg!("Transfer pending reward from reward to depositor wallet");
                 let seeds = &[
                     state.to_account_info().key.as_ref(),
                     &[state.nonce],
@@ -205,7 +205,7 @@ mod staking {
                     ctx.accounts.token_program.clone(),
                     token::Transfer {
                         from: ctx.accounts.reward_vault.to_account_info(),
-                        to: ctx.accounts.balances.vault_pw.to_account_info(),
+                        to: ctx.accounts.depositor.to_account_info(),
                         authority: ctx.accounts.imprint.to_account_info(),
                     },
                     staking_pool_imprint,
@@ -289,9 +289,6 @@ mod staking {
         if *ctx.accounts.balances.vault_stake.to_account_info().key != ctx.accounts.member.balances.vault_stake {
             return Err(ErrorCode::InvalidVault.into());
         }
-        if *ctx.accounts.balances.vault_pw.to_account_info().key != ctx.accounts.member.balances.vault_pw {
-            return Err(ErrorCode::InvalidVault.into());
-        }
 
         let state = &mut ctx.accounts.staking_pool;
         update_pool(state, ctx.accounts.clock.clone(), ctx.accounts.pool_mint.supply).unwrap();
@@ -346,10 +343,10 @@ mod staking {
             }
         }
 
-        // Deposit from depositor account to stake vault
+        // Claim Reward
         if pending_reward > 0
         {
-            msg!("Transfer pending reward to vault pending");
+            msg!("Transfer pending reward to beneficial wallet");
             let seeds = &[
                 state.to_account_info().key.as_ref(),
                 &[state.nonce],
@@ -359,7 +356,7 @@ mod staking {
                 ctx.accounts.token_program.clone(),
                 token::Transfer {
                     from: ctx.accounts.reward_vault.to_account_info(),
-                    to: ctx.accounts.balances.vault_pw.to_account_info(),
+                    to: ctx.accounts.beneficial.to_account_info(),
                     authority: ctx.accounts.imprint.to_account_info(),
                 },
                 staking_pool_imprint,
@@ -376,26 +373,6 @@ mod staking {
             .checked_mul(state.acc_token_per_share as u128).unwrap()
             .checked_div(state.precision_factor as u128).unwrap() as u64;
 
-        Ok(())
-    }
-
-    pub fn cal_pending_reward(ctx: Context<CheckPendingRewardRequest>) -> Result<(), ProgramError>
-    {
-        let staked_token_supply = ctx.accounts.balances.spt.amount;
-        let member_reward_debt = ctx.accounts.member.reward_debt;
-        let state = ctx.accounts.staking_pool.clone();
-        let amount = ctx.accounts.balances.spt.amount.clone();
-        let pending_reward = if ctx.accounts.clock.unix_timestamp > state.last_reward_block && staked_token_supply != 0 {
-            let multiplier = get_multiplier(state.last_reward_block, ctx.accounts.clock.unix_timestamp, state.bonus_end_block);
-            let token_reward = multiplier.checked_mul(state.reward_per_block).unwrap();
-            let adjusted_token_per_share = state.acc_token_per_share as u128 + (token_reward as u128)
-                .checked_mul(state.precision_factor as u128).unwrap()
-                .checked_div(staked_token_supply as u128).unwrap();
-            amount as u128 * adjusted_token_per_share / state.precision_factor as u128 - member_reward_debt as u128
-        } else {
-            amount as u128 * state.acc_token_per_share as u128 / state.precision_factor as u128 - member_reward_debt as u128
-        };
-        msg!("Pending reward: {}", pending_reward);
         Ok(())
     }
 }
@@ -449,8 +426,7 @@ pub struct CreateMemberRequest<'info> {
     #[account(
     "&balances.spt.owner == member_imprint.key",
     "balances.spt.mint == staking_pool.pool_mint",
-    "balances.vault_stake.mint == staking_pool.mint",
-    "balances.vault_pw.mint == staking_pool.mint"
+    "balances.vault_stake.mint == staking_pool.mint"
     )]
     balances: BalanceSandboxAccounts<'info>,
     member_imprint: AccountInfo<'info>,
@@ -479,8 +455,7 @@ pub struct DepositRequest<'info> {
     #[account(
     "&balances.spt.owner == member_imprint.key",
     "balances.spt.mint == staking_pool.pool_mint",
-    "balances.vault_stake.mint == staking_pool.mint",
-    "balances.vault_pw.mint == staking_pool.mint"
+    "balances.vault_stake.mint == staking_pool.mint"
     )]
     balances: BalanceSandboxAccounts<'info>,
     #[account(seeds = [
@@ -523,8 +498,7 @@ pub struct WithDrawRequest<'info> {
     #[account(
     "&balances.spt.owner == member_imprint.key",
     "balances.spt.mint == staking_pool.pool_mint",
-    "balances.vault_stake.mint == staking_pool.mint",
-    "balances.vault_pw.mint == staking_pool.mint"
+    "balances.vault_stake.mint == staking_pool.mint"
     )]
     balances: BalanceSandboxAccounts<'info>,
     #[account(seeds = [
@@ -546,25 +520,6 @@ pub struct WithDrawRequest<'info> {
     token_program: AccountInfo<'info>,
     clock: Sysvar<'info, Clock>,
     rent: Sysvar<'info, Rent>,
-}
-
-#[derive(Accounts)]
-pub struct CheckPendingRewardRequest<'info> {
-    staking_pool: ProgramState<'info, StakingPool>,
-    pool_mint: CpiAccount<'info, Mint>,
-
-    /// Member relate account
-    #[account(has_one = authority)]
-    member: ProgramAccount<'info, Member>,
-    #[account(mut, signer)]
-    authority: AccountInfo<'info>,
-    #[account(
-    "balances.spt.mint == staking_pool.pool_mint",
-    "balances.vault_stake.mint == staking_pool.mint",
-    "balances.vault_pw.mint == staking_pool.mint"
-    )]
-    balances: BalanceSandboxAccounts<'info>,
-    clock: Sysvar<'info, Clock>,
 }
 
 #[derive(Accounts)]
@@ -598,8 +553,6 @@ pub struct BalanceSandbox {
     pub spt: Pubkey,
     // Stake vaults.
     pub vault_stake: Pubkey,
-    // Pending withdrawal vaults.
-    pub vault_pw: Pubkey,
 }
 
 /// When creating a member, the mints and owners of these accounts are correct.
@@ -613,16 +566,13 @@ pub struct BalanceSandboxAccounts<'info> {
     spt: CpiAccount<'info, TokenAccount>,
     #[account(mut, "vault_stake.owner == spt.owner")]
     vault_stake: CpiAccount<'info, TokenAccount>,
-    #[account(mut, "vault_pw.owner == spt.owner", "vault_pw.mint == vault_stake.mint")]
-    vault_pw: CpiAccount<'info, TokenAccount>,
 }
 
 impl<'info> From<&BalanceSandboxAccounts<'info>> for BalanceSandbox {
     fn from(accounts: &BalanceSandboxAccounts<'info>) -> Self {
         Self {
             spt: *accounts.spt.to_account_info().key,
-            vault_stake: *accounts.vault_stake.to_account_info().key,
-            vault_pw: *accounts.vault_pw.to_account_info().key,
+            vault_stake: *accounts.vault_stake.to_account_info().key
         }
     }
 }

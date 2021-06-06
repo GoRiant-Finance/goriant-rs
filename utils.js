@@ -25,7 +25,6 @@ async function log_state(state) {
 async function createBalanceSandbox(provider, r, registrySigner) {
   const spt = new anchor.web3.Account();
   const vaultStake = new anchor.web3.Account();
-  const vaultPw = new anchor.web3.Account();
 
   const lamports = await provider.connection.getMinimumBalanceForRentExemption(
     165
@@ -45,20 +44,13 @@ async function createBalanceSandbox(provider, r, registrySigner) {
     registrySigner,
     lamports
   );
-  const createVaultPwIx = await serumCmn.createTokenAccountInstrs(
-    provider,
-      vaultPw.publicKey,
-    r.mint,
-    registrySigner,
-    lamports
-  );
+
   let tx0 = new anchor.web3.Transaction();
   tx0.add(
     ...createSptIx,
-    ...createVaultStakeIx,
-    ...createVaultPwIx
+    ...createVaultStakeIx
   );
-  let signers0 = [spt, vaultStake, vaultPw];
+  let signers0 = [spt, vaultStake];
 
   const tx = {tx: tx0, signers: signers0};
 
@@ -66,8 +58,7 @@ async function createBalanceSandbox(provider, r, registrySigner) {
     tx,
     {
       spt: spt.publicKey,
-      vaultStake: vaultStake.publicKey,
-      vaultPw: vaultPw.publicKey,
+      vaultStake: vaultStake.publicKey
     },
   ];
 }
@@ -87,8 +78,6 @@ async function printMemberAccountInfo(memberAccount) {
   console.log("memberAccount.balances");
   console.log("spt: ", memberBalances.spt.toString(), " - amount: ", await tokenBalance(memberBalances.spt))
   console.log("vaultStake: ", memberBalances.vaultStake.toString(), " - amount: ", await tokenBalance(memberBalances.vaultStake))
-  console.log("vaultPw: ", memberBalances.vaultPw.toString(), " - amount: ", await tokenBalance(memberBalances.vaultPw))
-
 }
 
 
