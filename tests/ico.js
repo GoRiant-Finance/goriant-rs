@@ -1,8 +1,9 @@
 const expect = require("expect");
 const anchor = require("@project-serum/anchor");
-const TokenInstructions = require("@project-serum/serum").TokenInstructions;
-// const {Token, ASSOCIATED_TOKEN_PROGRAM_ID} = require("@solana/spl-token");
+const {TokenInstructions} = require("@project-serum/serum");
 const serumCmn = require("@project-serum/common");
+const {LAMPORTS_PER_SOL} = require("@solana/web3.js");
+const {ASSOCIATED_TOKEN_PROGRAM_ID, Token} = require("@solana/spl-token");
 
 describe("test ico program", () => {
   const provider = anchor.Provider.env();
@@ -18,16 +19,15 @@ describe("test ico program", () => {
       // given
       const [_mint, god] = await serumCmn.createMintAndVault(
         provider,
-        new anchor.BN(1_000_000 * anchor.web3.LAMPORTS_PER_SOL),
+        new anchor.BN(1_000_000 * LAMPORTS_PER_SOL),
         owner, 9);
 
       mint = _mint;
 
       const statePubKey = await program.state.address();
       const start = new anchor.BN(new Date().getTime() / 1000);// + 0.5 * minuteInSecond);
-      const cap = 10000; // raising 10,000 SOL
+      const cap = 10_000; // raising 10,000 SOL
       const rate = 20; // 1 SOL = 20 RIANT
-      const depositor = god;
 
       const icoPool = new anchor.web3.Keypair();
       const [icoPoolImprint, nonce] = await anchor.web3.PublicKey.findProgramAddress(
@@ -45,7 +45,7 @@ describe("test ico program", () => {
         {
           accounts: {
             authority: owner,
-            depositor,
+            depositor: god,
             icoPool: icoPool.publicKey,
             tokenProgram: TokenInstructions.TOKEN_PROGRAM_ID,
             rent: anchor.web3.SYSVAR_RENT_PUBKEY
@@ -71,9 +71,9 @@ describe("test ico program", () => {
       expect(state.key).not.toBeNull();
       expect(state.initialized).toBeTruthy();
       expect(state.start).toEqual(start);
-      expect(state.cap).toEqual(cap);
       expect(state.raisedAmount).toEqual(0);
-      expect(state.rate).toEqual(rate);
+      expect(state.cap.toString()).toEqual('10000');
+      expect(state.rate.toString()).toEqual('20');
       expect(state.owner).toEqual(owner);
       expect(state.beneficiary).toEqual(owner);
       expect(state.icoPool).not.toBeNull();
@@ -84,8 +84,9 @@ describe("test ico program", () => {
 
     it("Test airdrop", async () => {
 
+      // given
       const {key, beneficiary, icoPool, imprint} = await program.state();
-      const amount = new anchor.BN(10 * tokenInLamport);
+      const amount = new anchor.BN(10 * LAMPORTS_PER_SOL);
 
       const clientWallet = await Token.getAssociatedTokenAddress(
         ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -94,6 +95,7 @@ describe("test ico program", () => {
         owner
       )
 
+      // when
       const tx = await program.rpc.buy(
         amount,
         {
@@ -107,11 +109,25 @@ describe("test ico program", () => {
             buyerTokenWallet: clientWallet,
             tokenProgram: TokenInstructions.TOKEN_PROGRAM_ID,
             systemProgram: anchor.web3.SystemProgram.programId
-          }
+          },
+          instructions: [
+            Token.createAssociatedTokenAccountInstruction(
+              ASSOCIATED_TOKEN_PROGRAM_ID,
+              TokenInstructions.TOKEN_PROGRAM_ID,
+              mint,
+              clientWallet,
+              owner,
+              owner
+            )
+          ]
         });
 
+      // then
+      const icoPoolBalance = await provider.connection.getTokenAccountBalance(icoPool)
+      const riantBalance = await provider.connection.getTokenAccountBalance(clientWallet)
       expect(tx).not.toBeNull();
-
+      expect(riantBalance.value.uiAmount.toString()).toEqual("200");
+      expect(icoPoolBalance.value.uiAmount.toString()).toEqual("199800");
     })
   })
 
