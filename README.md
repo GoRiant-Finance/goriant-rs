@@ -1,21 +1,33 @@
-# Goriant Rust - Solana blockchain
+# Goriant Rust - Solana Blockchain
 
-## Flexible staking program
+## Flexible staking program and pending reward calculation real time
 
 ### Guide to run local dev
 
-run solana test validator local
+- run solana test validator local
 
+```
     nohup solana-test-validator -r &
+```
 
-- build & deploy to local net - after run build & deploy
-- it will grep programId from output and update programId in config.json
+- build & deploy to local net
 
-    ./deploy.sh
+```  
+    anchor build && anchor deploy    
+```
+
+- run integration tests
+
+```
+    anchor test
+```
 
 ### Tech stack:
-- anchor 0.5.0
+- anchor 0.6.0
+- mocha
+- chaijs
     
-    #### setup DEV ENV anchor
+
+#### setup DEV ENV anchor
         
         https://project-serum.github.io/anchor/getting-started/installation.html
