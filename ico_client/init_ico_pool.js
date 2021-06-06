@@ -12,37 +12,19 @@ const tokenInLamport = anchor.web3.LAMPORTS_PER_SOL;
 
 const owner = provider.wallet.publicKey;
 
+/**
+ * Raise 10_000 SOL by selling 200_000 RIANT
+ */
 async function init_riant_ico() {
 
     const mint = new anchor.web3.PublicKey(config.token)
     const god = new anchor.web3.PublicKey(config.vault)
 
-    // const [mint, god] = await serumCmn.createMintAndVault(
-    //     provider,
-    //     new anchor.BN(1_000_000 * anchor.web3.LAMPORTS_PER_SOL),
-    //     owner, 9);
-    //
-    // console.log('mint: ', mint.toString())
-    // console.log('god: ', god.toString())
-    // config.token = mint.toBase58();
-    // config.vault = god.toBase58();
-    // utils.writeConfig(config);
-
-    // 1. issue 1_000_000 RIANT
-    // 2. anh send 200_000 RIANT vào vault của ICO program
-    // 3. 200_000 RIANT sẽ dc sell với rate SOL là 1/20
-
-    // buy (SOL)
-    // 4. buyer wallet => my wallet send SOL đến ICO program
-    // 5. amount SOL * 20
-    // 6. dispatch RIANT
-    // 7. SOL của buyer sẽ chuyển thẳng vào SOL Wallet của anh
-
     try {
 
         const statePubKey = await program.state.address();
-        const start = new anchor.BN(new Date().getTime() / 1000);// + 0.5 * minuteInSecond);
-        const cap = 10_000; // raising 100,000 SOL
+        const start = new anchor.BN(new Date().getTime() / 1000);
+        const cap = 10_000; // raising 10,000 SOL
         const rate = 20; // 1 SOL = 20 RIANT
         const depositor = god;
 
