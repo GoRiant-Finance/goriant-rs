@@ -1,4 +1,4 @@
-const expect = require("expect");
+const { expect } = require("chai");
 const anchor = require("@project-serum/anchor");
 const {TokenInstructions} = require("@project-serum/serum");
 const serumCmn = require("@project-serum/common");
@@ -12,7 +12,7 @@ describe("test ico program", () => {
   const owner = provider.wallet.publicKey;
   let mint;
 
-  describe("init Riant ICO pool", () => {
+  describe("Init Riant ICO pool", () => {
 
     it("test init Riant ICO program", async () => {
 
@@ -67,16 +67,16 @@ describe("test ico program", () => {
 
       let state = await program.state();
 
-      expect(tx).not.toBeNull();
-      expect(state.key).not.toBeNull();
-      expect(state.initialized).toBeTruthy();
-      expect(state.start).toEqual(start);
-      expect(state.raisedAmount).toEqual(0);
-      expect(state.cap.toString()).toEqual('10000');
-      expect(state.rate.toString()).toEqual('20');
-      expect(state.owner).toEqual(owner);
-      expect(state.beneficiary).toEqual(owner);
-      expect(state.icoPool).not.toBeNull();
+      expect(tx).to.exist;
+      expect(state.key).to.eql(statePubKey);
+      expect(state.initialized).to.be.true;
+      expect(state.start).to.eql(start);
+      expect(state.raisedAmount).to.equal(0);
+      expect(state.cap.toString()).to.equal('10000');
+      expect(state.rate.toString()).to.equal('20');
+      expect(state.owner).to.eql(owner);
+      expect(state.beneficiary).to.eql(owner);
+      expect(state.icoPool).not.to.be.null;
     });
   })
 
@@ -125,9 +125,9 @@ describe("test ico program", () => {
       // then
       const icoPoolBalance = await provider.connection.getTokenAccountBalance(icoPool)
       const riantBalance = await provider.connection.getTokenAccountBalance(clientWallet)
-      expect(tx).not.toBeNull();
-      expect(riantBalance.value.uiAmount.toString()).toEqual("200");
-      expect(icoPoolBalance.value.uiAmount.toString()).toEqual("199800");
+      expect(tx).to.exist;
+      expect(riantBalance.value.uiAmount.toString(), "Client Riant balace should be 200 after claim airdrop").to.equal("200");
+      expect(icoPoolBalance.value.uiAmount.toString(), "ICO Pool should remain 199,800 RIANT").to.equal("199800");
     })
   })
 
