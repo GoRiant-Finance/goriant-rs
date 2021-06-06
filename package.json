@@ -1,8 +1,8 @@
 {
   "dependencies": {
-    "@project-serum/anchor": "*",
-    "@project-serum/common": "^0.0.1-beta.3",
-    "@project-serum/serum": "*",
-    "@solana/spl-token": "*"
+    "@project-serum/anchor": "0.6.0",
+    "@project-serum/common": "0.0.1-beta.3",
+    "@project-serum/serum": "0.13.38",
+    "@solana/spl-token": "0.1.5"
   }
 }
