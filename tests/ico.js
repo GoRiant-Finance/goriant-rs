@@ -34,6 +34,7 @@ describe("test ico program", () => {
       // when
       let tx = await program.state.rpc.new(
         statePubKey,
+        nonce,
         start,
         cap,
         rate,
