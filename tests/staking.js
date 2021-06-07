@@ -83,9 +83,8 @@ describe("test staking program", () => {
 
       expect(state.key).to.eql(statePubKey);
       expect(state.authority).to.eql(owner);
-      expect(state.mint).to.eql(mint);
-      expect(state.poolMint).to.eql(poolMint);
-
+      expect(state.mint.toString()).to.equal(mint.toString());
+      expect(state.poolMint.toString()).to.eql(poolMint.toString());
       expect(state.rewardVault).to.eql(rewardVault.publicKey);
       expect(state.startBlock).to.eql(startBlock);
       expect(state.bonusEndBlock).to.eql(endBlock);
@@ -181,7 +180,7 @@ describe("test staking program", () => {
       // assert program state
       expect(state.key).to.eql(statePubKey);
       expect(state.authority).to.eql(owner);
-      expect(state.mint).to.eql(mint);
+      expect(state.mint.toString()).to.eql(mint.toString());
       expect(state.accTokenPerShare.toString()).to.equal("0");
       expect(state.stakeRate.toString()).to.equal("1");
       expect(state.rewardPerBlock.toString()).to.equal("100000000");
